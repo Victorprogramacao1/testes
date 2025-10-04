@@ -171,6 +171,12 @@
             0%, 100% { transform: translateY(-50%) scale(1); }
             50% { transform: translateY(-60%) scale(1.2); }
         }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
         
         .text-shadow-lg {
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
@@ -634,38 +640,6 @@
                 document.getElementById('syncIndicator').style.display = 'none';
             }
 
-            async loadDishes() {
-                try {
-                    if (!this.isOnline) {
-                        return this.loadFromLocalStorage();
-                    }
-
-                    this.showSyncIndicator('syncing');
-                    
-                    const querySnapshot = await window.firestore.getDocs(
-                        window.firestore.collection(window.db, 'dishes')
-                    );
-                    
-                    allDishes = [];
-                    querySnapshot.forEach((doc) => {
-                        allDishes.push({ id: doc.id, ...doc.data() });
-                    });
-
-                    // Save to localStorage for offline use
-                    localStorage.setItem('dishes', JSON.stringify(allDishes));
-                    
-                    this.hideSyncIndicator();
-                    this.renderAllDishes();
-                    
-                } catch (error) {
-                    console.error('Erro ao carregar pratos:', error);
-                    this.showSyncIndicator('error');
-                    
-                    // Fallback to localStorage
-                    this.loadFromLocalStorage();
-                }
-            }
-
             loadFromLocalStorage() {
                 const savedDishes = localStorage.getItem('dishes');
                 if (savedDishes) {
@@ -679,360 +653,49 @@
                     }
                 }
                 
-                // Load default dishes if no data exists or error occurred
-                console.log('🍽️ Carregando cardápio padrão...');
-                this.loadDefaultDishes();
+                // Initialize empty arrays for each category
+                allDishes = [];
+                this.renderAllDishes();
             }
 
-            loadDefaultDishes() {
-                allDishes = [
-                    // ENTRADAS
-                    {
-                        id: 'default1',
-                        name: 'Pastéis Sortidos',
-                        description: 'Pastéis de carne, pepperoni, costela e carne de sol.',
-                        price: 'R$ 29,90',
-                        category: 'entradas',
-                        emoji: '🥟',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default2',
-                        name: 'Pastéis de Camarão',
-                        description: 'Pastéis com cream cheese e creme de camarão, servidos com molho de ervas.',
-                        price: 'R$ 34,90',
-                        category: 'entradas',
-                        emoji: '🦐',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default3',
-                        name: 'Fritapá de Camarão',
-                        description: 'Bolinho frito de vatapá de camarão com base de moqueca, crocante por fora e cremoso por dentro.',
-                        price: 'R$ 25,90',
-                        category: 'entradas',
-                        emoji: '🍤',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default4',
-                        name: 'Ensopado de Vaca Atolada',
-                        description: 'Caldinho cremoso de costela com macaxeira.',
-                        price: 'R$ 15,90',
-                        category: 'entradas',
-                        emoji: '🍲',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default5',
-                        name: 'Caldo da Caridade',
-                        description: 'Caldo de carne moída com legumes.',
-                        price: 'R$ 16,90',
-                        category: 'entradas',
-                        emoji: '🥣',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default6',
-                        name: 'Carne de Sol com Macaxeira',
-                        description: 'Carne de sol salteada na manteiga da terra e cebolas roxas, servida com macaxeira cremosa e cubos de queijo coalho.',
-                        price: 'R$ 39,90',
-                        category: 'entradas',
-                        emoji: '🥩',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default7',
-                        name: 'Sol do Sertão',
-                        description: 'Chips crocantes de macaxeira servidas com carne de sol desfiada e creme de nata.',
-                        price: 'R$ 29,90',
-                        category: 'entradas',
-                        emoji: '🌞',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default8',
-                        name: 'Batata Frita',
-                        description: 'Palitos de batata inglesa crocantes com raspas de queijo e molho da casa.',
-                        price: 'R$ 16,90',
-                        category: 'entradas',
-                        emoji: '🍟',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default9',
-                        name: 'Franguim Avuado',
-                        description: 'Meio da asa marinada no sous vide, frita e servida com molho barbecue asiático de abacaxi e gergelim.',
-                        price: 'R$ 29,90',
-                        category: 'entradas',
-                        emoji: '🍗',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default10',
-                        name: 'Croquetas Caipira',
-                        description: 'Croquetas de frango recheadas com milho e bacon.',
-                        price: 'R$ 19,90',
-                        category: 'entradas',
-                        emoji: '🌽',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default11',
-                        name: 'Sushi de Carrazera',
-                        description: 'Sushi crocante com massa de macaxeira, cubos de charque e carne de sol, servido com molho de rapadura.',
-                        price: 'R$ 34,90',
-                        category: 'entradas',
-                        emoji: '🍣',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default12',
-                        name: 'Isca de Tucunaré',
-                        description: 'Tiras de tucunaré à milanesa servidas com molho rosé.',
-                        price: 'R$ 32,90',
-                        category: 'entradas',
-                        emoji: '🐟',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default13',
-                        name: 'Filé no Panne',
-                        description: 'Tiras de filé mignon salteadas com creme de gorgonzola, servidas no pão italiano quentinho.',
-                        price: 'R$ 79,90',
-                        category: 'entradas',
-                        emoji: '🥩',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default14',
-                        name: 'Ai Meu Coração',
-                        description: 'Coração de galinha marinado no shoyu, salteado no molho oriental e servido com chips de macaxeira.',
-                        price: 'R$ 32,90',
-                        category: 'entradas',
-                        emoji: '❤️',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'default15',
-                        name: 'Camarão Alho e Óleo',
-                        description: 'Camarão com casca salteado no azeite de oliva, alho e limão.',
-                        price: 'R$ 54,90',
-                        category: 'entradas',
-                        emoji: '🦐',
-                        imageUrl: ''
-                    },
-                    
-                    // PRATOS PRINCIPAIS
-                    {
-                        id: 'main1',
-                        name: 'Camarão João Pessoa',
-                        description: 'Arroz gratinado de camarão puxado à base de moqueca e servido com camarões empanados.',
-                        price: 'R$ 149,90',
-                        category: 'pratos-principais',
-                        emoji: '🦐',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'main2',
-                        name: 'Filé à Parmegiana Dupla',
-                        description: 'Tradicional filé empanado com molho de tomate italiano e gratinado de mussarela, servido com massa grano duro.',
-                        price: 'R$ 129,90',
-                        category: 'pratos-principais',
-                        emoji: '🍝',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'main3',
-                        name: 'Picanha Trinchada',
-                        description: 'Steaks de picanha selada na chapa com manteiga de ervas, sal temperado e cebolas roxas. Acompanha macaxeira cremosa, arroz de brócolis, farofa e vinagrete.',
-                        price: 'R$ 79,90',
-                        category: 'pratos-principais',
-                        emoji: '🥩',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'main4',
-                        name: 'Picanha Completa',
-                        description: 'Picanha trinchada grelhada na chapa com temperos especiais e acompanhamentos tradicionais.',
-                        price: 'R$ 159,00',
-                        category: 'pratos-principais',
-                        emoji: '🔥',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'main5',
-                        name: 'Filé de Seu Pedro',
-                        description: 'Medalhões de filé mignon selados e flambados servidos com creme de gorgonzola. Acompanha arroz à piemontese.',
-                        price: 'R$ 189,00',
-                        category: 'pratos-principais',
-                        emoji: '👨‍🍳',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'main6',
-                        name: 'Costela de Bacurim',
-                        description: 'Costela suína assada lentamente e regada com barbecue de abacaxi. Acompanha batatas rústicas temperadas com o tempero do chef.',
-                        price: 'R$ 79,90',
-                        category: 'pratos-principais',
-                        emoji: '🍖',
-                        imageUrl: ''
-                    },
-                    
-                    // PRATOS EXECUTIVOS
-                    {
-                        id: 'exec1',
-                        name: 'Cumê de Rico',
-                        description: 'Arroz cremoso ao molho branco, puxado com camarões salteados e camarões empanados.',
-                        price: 'R$ 49,90',
-                        category: 'executivos',
-                        emoji: '🦐',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'exec2',
-                        name: 'Boi Bêbo',
-                        description: 'Costela bovina marinada na cerveja preta e ervas, assada levemente ao vapor e servida com arroz de jerimum e cebolinho.',
-                        price: 'R$ 39,90',
-                        category: 'executivos',
-                        emoji: '🍺',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'exec3',
-                        name: 'Cumêzim de Vó',
-                        description: 'Arroz vermelho cozido ao leite, servido com chips de macaxeira crocante e carne de sol desfiada.',
-                        price: 'R$ 32,90',
-                        category: 'executivos',
-                        emoji: '👵',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'exec4',
-                        name: 'Filé à Parmegiana',
-                        description: 'Filé empanado com molho de tomate italiano e gratinado de mussarela, servido com massa italiana.',
-                        price: 'R$ 59,90',
-                        category: 'executivos',
-                        emoji: '🍝',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'exec5',
-                        name: 'Baião de 4',
-                        description: 'Baião de feijão verde puxado com carne de sol, queijo coalho, charque e torresmo, servido com couve frita.',
-                        price: 'R$ 49,90',
-                        category: 'executivos',
-                        emoji: '🌱',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'exec6',
-                        name: 'Camarão do Chef',
-                        description: 'Massa italiana com molho bisque de camarão, finalizada com tomates confitados e camarões salteados.',
-                        price: 'R$ 72,90',
-                        category: 'executivos',
-                        emoji: '👨‍🍳',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'exec7',
-                        name: 'Frango à Parmegiana',
-                        description: 'Filé de frango empanado com molho de tomate italiano e gratinado de mussarela, servido com massa italiana.',
-                        price: 'R$ 34,90',
-                        category: 'executivos',
-                        emoji: '🐔',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'exec8',
-                        name: 'Frango à Parmegiana Trinchada',
-                        description: 'Filé de frango trinchado com molho de tomate italiano e gratinado de mussarela.',
-                        price: 'R$ 34,90',
-                        category: 'executivos',
-                        emoji: '🍗',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'exec9',
-                        name: 'Camarão à Romana',
-                        description: 'Camarões inteiros com molho rosé e gratinado de mussarela.',
-                        price: 'R$ 49,90',
-                        category: 'executivos',
-                        emoji: '🦐',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'exec10',
-                        name: 'Arroz à Piemontese',
-                        description: 'Arroz cremoso com quatro queijos.',
-                        price: 'R$ 14,90',
-                        category: 'executivos',
-                        emoji: '🧀',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'exec11',
-                        name: 'Franguim Magrim',
-                        description: 'Filé de frango cozido levemente no suco, grelhado na chapa e servido com arroz branco e mix de salada crua.',
-                        price: 'R$ 39,90',
-                        category: 'executivos',
-                        emoji: '🥗',
-                        imageUrl: ''
-                    },
-                    
-                    // SOBREMESAS
-                    {
-                        id: 'dessert1',
-                        name: 'Dirmantelo de Goiabada',
-                        description: 'Brûlée de creme de queijo de manteiga com calda de goiabada, crumble de biscoito e castanha de caju.',
-                        price: 'R$ 32,90',
-                        category: 'sobremesas',
-                        emoji: '🍮',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'dessert2',
-                        name: 'Pudim Matuto',
-                        description: 'Tradicional pudim feito com leite de coco e calda de rapadura.',
-                        price: 'R$ 19,90',
-                        category: 'sobremesas',
-                        emoji: '🥥',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'dessert3',
-                        name: 'Bagaceira de Chocolate',
-                        description: 'Gran Gateau de chocolate servido com picolé crocante.',
-                        price: 'R$ 32,90',
-                        category: 'sobremesas',
-                        emoji: '🍫',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'dessert4',
-                        name: 'Cocada Quente',
-                        description: 'Cocada cremosa assada ao forno com brûlée e sorvete de creme.',
-                        price: 'R$ 34,90',
-                        category: 'sobremesas',
-                        emoji: '🥥',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'dessert5',
-                        name: 'Surpresa de Morango',
-                        description: 'Creme de baunilha, sorvete de creme e geleia de morango.',
-                        price: 'R$ 34,90',
-                        category: 'sobremesas',
-                        emoji: '🍓',
-                        imageUrl: ''
+            async loadDishes() {
+                // First try to load from localStorage for instant display
+                this.loadFromLocalStorage();
+                
+                // Then try to sync with Firebase in background
+                if (this.isOnline) {
+                    try {
+                        this.showSyncIndicator('syncing');
+                        
+                        const querySnapshot = await window.firestore.getDocs(
+                            window.firestore.collection(window.db, 'dishes')
+                        );
+                        
+                        const firebaseDishes = [];
+                        querySnapshot.forEach((doc) => {
+                            firebaseDishes.push({ id: doc.id, ...doc.data() });
+                        });
+
+                        // Only update if Firebase has data and it's different from local
+                        if (firebaseDishes.length > 0) {
+                            const localDataString = JSON.stringify(allDishes.sort((a, b) => a.id.localeCompare(b.id)));
+                            const firebaseDataString = JSON.stringify(firebaseDishes.sort((a, b) => a.id.localeCompare(b.id)));
+                            
+                            if (localDataString !== firebaseDataString) {
+                                allDishes = firebaseDishes;
+                                localStorage.setItem('dishes', JSON.stringify(allDishes));
+                                this.renderAllDishes();
+                                showNotification('🔄 Dados atualizados do servidor');
+                            }
+                        }
+                        
+                        this.hideSyncIndicator();
+                        
+                    } catch (error) {
+                        console.error('Erro ao sincronizar com Firebase:', error);
+                        this.showSyncIndicator('error');
                     }
-                ];
-                
-                // Save to localStorage for future offline use
-                localStorage.setItem('dishes', JSON.stringify(allDishes));
-                console.log(`🍽️ ${allDishes.length} pratos do cardápio padrão carregados e salvos localmente`);
-                
-                this.renderAllDishes();
+                }
             }
 
             async saveDish(dishData) {
@@ -1176,11 +839,31 @@
                     'sobremesas': document.getElementById('sobremesasGrid')
                 };
 
-                allDishes.forEach(dish => {
-                    const dishCard = this.createDishCard(dish);
-                    const targetGrid = categories[dish.category] || categories['entradas'];
-                    targetGrid.appendChild(dishCard);
-                });
+                if (allDishes.length === 0) {
+                    // Show empty state for all categories
+                    Object.values(categories).forEach(grid => {
+                        grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500"><div class="text-6xl mb-4">🍽️</div><h3 class="text-xl font-semibold mb-2">Nenhum prato cadastrado</h3><p>Use o painel administrativo para adicionar pratos</p></div>';
+                    });
+                } else {
+                    allDishes.forEach(dish => {
+                        const dishCard = this.createDishCard(dish);
+                        const targetGrid = categories[dish.category] || categories['entradas'];
+                        targetGrid.appendChild(dishCard);
+                    });
+
+                    // Show empty state for categories without dishes
+                    Object.entries(categories).forEach(([categoryName, grid]) => {
+                        if (grid.children.length === 0) {
+                            const categoryDisplayName = {
+                                'entradas': 'Entradas',
+                                'pratos-principais': 'Pratos Principais',
+                                'executivos': 'Pratos Executivos',
+                                'sobremesas': 'Sobremesas'
+                            }[categoryName];
+                            grid.innerHTML = `<div class="col-span-full text-center py-8 text-gray-400"><div class="text-4xl mb-2">🍽️</div><p>Nenhum prato em ${categoryDisplayName}</p></div>`;
+                        }
+                    });
+                }
 
                 // Add admin controls if in admin mode
                 if (isAdminMode) {
@@ -1447,15 +1130,149 @@
             if (adminClickCount === 3) {
                 adminClickCount = 0;
                 clearTimeout(adminClickTimer);
+                showAdminLoginPanel();
+            }
+        }
+
+        function showAdminLoginPanel() {
+            const loginModal = document.createElement('div');
+            loginModal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            loginModal.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="loginPanel">
+                    <div class="text-center mb-8">
+                        <div class="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Acesso Administrativo</h2>
+                        <p class="text-gray-600">Digite sua senha para continuar</p>
+                    </div>
+                    
+                    <form onsubmit="handleAdminLogin(event)" class="space-y-6">
+                        <div class="relative">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Senha de Administrador</label>
+                            <div class="relative">
+                                <input 
+                                    type="password" 
+                                    id="adminPassword" 
+                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-500 focus:outline-none transition-colors bg-gray-50 focus:bg-white"
+                                    placeholder="Digite sua senha..."
+                                    required
+                                    autocomplete="off"
+                                >
+                                <button 
+                                    type="button" 
+                                    onclick="togglePasswordVisibility()" 
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="loginError" class="text-red-500 text-sm mt-2 hidden">
+                                <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                                Senha incorreta. Tente novamente.
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button 
+                                type="submit" 
+                                class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                                </svg>
+                                Entrar
+                            </button>
+                            <button 
+                                type="button" 
+                                onclick="closeAdminLoginPanel()" 
+                                class="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-6 pt-6 border-t border-gray-200 text-center">
+                        <p class="text-xs text-gray-500">
+                            🔒 Acesso restrito apenas para administradores autorizados
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(loginModal);
+            
+            // Animate panel entrance
+            setTimeout(() => {
+                const panel = document.getElementById('loginPanel');
+                panel.classList.remove('scale-95', 'opacity-0');
+                panel.classList.add('scale-100', 'opacity-100');
+            }, 50);
+            
+            // Focus on password input
+            setTimeout(() => {
+                document.getElementById('adminPassword').focus();
+            }, 300);
+        }
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('adminPassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                `;
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                `;
+            }
+        }
+
+        function handleAdminLogin(event) {
+            event.preventDefault();
+            
+            const password = document.getElementById('adminPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            if (password === 'Vic20142015@') {
+                closeAdminLoginPanel();
+                showNotification('✅ Acesso administrativo concedido!');
+                activateAdminMode();
+            } else {
+                errorDiv.classList.remove('hidden');
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminPassword').focus();
                 
-                const password = prompt('Digite a senha de administrador:');
-                
-                if (password === 'Vic20142015@') {
-                    showNotification('✅ Acesso administrativo concedido!');
-                    activateAdminMode();
-                } else if (password !== null) {
-                    showNotification('❌ Senha incorreta!');
-                }
+                // Shake animation for error
+                const panel = document.getElementById('loginPanel');
+                panel.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => {
+                    panel.style.animation = '';
+                }, 500);
+            }
+        }
+
+        function closeAdminLoginPanel() {
+            const loginModal = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-75');
+            if (loginModal) {
+                const panel = document.getElementById('loginPanel');
+                panel.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    loginModal.remove();
+                }, 300);
             }
         }
 
@@ -1809,36 +1626,6 @@
             }
         }
 
-        // Test Firebase connection
-        async function testFirebaseConnection() {
-            try {
-                console.log('🔥 Testando conexão Firebase...');
-                
-                // Test basic connection
-                if (!window.db) {
-                    throw new Error('Firebase não inicializado');
-                }
-                
-                // Test Firestore access
-                const testCollection = window.firestore.collection(window.db, 'dishes');
-                console.log('✅ Firestore conectado com sucesso!');
-                
-                // Try to read data
-                const snapshot = await window.firestore.getDocs(testCollection);
-                console.log(`📊 Encontrados ${snapshot.size} documentos na coleção 'dishes'`);
-                
-                // Show success notification
-                showNotification(`🎉 Firebase conectado! ${snapshot.size} pratos carregados`);
-                
-                return true;
-                
-            } catch (error) {
-                console.error('❌ Erro na conexão Firebase:', error);
-                showNotification(`❌ Erro Firebase: ${error.message}`);
-                return false;
-            }
-        }
-
         // Function to clear all dishes from Firebase
         async function clearAllDishesFromFirebase() {
             try {
@@ -1867,16 +1654,6 @@
                 console.log(`✅ ${deleteCount} pratos removidos do Firebase!`);
                 showNotification(`🗑️ ${deleteCount} pratos removidos do Firebase!`);
                 
-                // Clear local data as well
-                allDishes = [];
-                localStorage.removeItem('dishes');
-                
-                // Clear all grids
-                document.getElementById('entradasGrid').innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum prato cadastrado</div>';
-                document.getElementById('pratosGrid').innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum prato cadastrado</div>';
-                document.getElementById('executivosGrid').innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum prato cadastrado</div>';
-                document.getElementById('sobremesasGrid').innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum prato cadastrado</div>';
-                
                 return deleteCount;
                 
             } catch (error) {
@@ -1886,10 +1663,53 @@
             }
         }
 
-        // Function to add all dishes to Firebase
-        async function addAllDishesToFirebase() {
-            const dishesToAdd = [
+        // Initialize dishes data
+        function initializeDishes() {
+            const dishes = [
+                // Sobremesas
                 {
+                    id: 'sobremesa_1',
+                    name: 'Dirmantelo de Goiabada',
+                    description: 'Brûlée de creme de queijo de manteiga com calda de goiabada, crumble de biscoito e castanha de caju.',
+                    price: 'R$ 32,90',
+                    category: 'sobremesas',
+                    emoji: '🍮'
+                },
+                {
+                    id: 'sobremesa_2',
+                    name: 'Pudim Matuto',
+                    description: 'Tradicional pudim feito com leite de coco e calda de rapadura.',
+                    price: 'R$ 19,90',
+                    category: 'sobremesas',
+                    emoji: '🍰'
+                },
+                {
+                    id: 'sobremesa_3',
+                    name: 'Bagaceira de Chocolate',
+                    description: 'Gran Gateau de chocolate servido com picolé crocante.',
+                    price: 'R$ 32,90',
+                    category: 'sobremesas',
+                    emoji: '🍫'
+                },
+                {
+                    id: 'sobremesa_4',
+                    name: 'Cocada Quente',
+                    description: 'Cocada cremosa assada ao forno com brûlée e sorvete de creme.',
+                    price: 'R$ 34,90',
+                    category: 'sobremesas',
+                    emoji: '🥥'
+                },
+                {
+                    id: 'sobremesa_5',
+                    name: 'Surpresa de Morango',
+                    description: 'Creme de baunilha, sorvete de creme e geleia de morango.',
+                    price: 'R$ 34,90',
+                    category: 'sobremesas',
+                    emoji: '🍓'
+                },
+                // Petiscos (Entradas)
+                {
+                    id: 'entrada_1',
                     name: 'Pastéis Sortidos',
                     description: 'Pastéis de carne, pepperoni, costela e carne de sol.',
                     price: 'R$ 29,90',
@@ -1897,13 +1717,15 @@
                     emoji: '🥟'
                 },
                 {
+                    id: 'entrada_2',
                     name: 'Pastéis de Camarão',
                     description: 'Pastéis com cream cheese e creme de camarão, servidos com molho de ervas.',
                     price: 'R$ 34,90',
                     category: 'entradas',
-                    emoji: '🦐'
+                    emoji: '🍤'
                 },
                 {
+                    id: 'entrada_3',
                     name: 'Fritapá de Camarão',
                     description: 'Bolinho frito de vatapá de camarão com base de moqueca, crocante por fora e cremoso por dentro.',
                     price: 'R$ 25,90',
@@ -1911,6 +1733,7 @@
                     emoji: '🍤'
                 },
                 {
+                    id: 'entrada_4',
                     name: 'Ensopado de Vaca Atolada',
                     description: 'Caldinho cremoso de costela com macaxeira.',
                     price: 'R$ 15,90',
@@ -1918,13 +1741,15 @@
                     emoji: '🍲'
                 },
                 {
+                    id: 'entrada_5',
                     name: 'Caldo da Caridade',
                     description: 'Caldo de carne moída com legumes.',
                     price: 'R$ 16,90',
                     category: 'entradas',
-                    emoji: '🥣'
+                    emoji: '🍲'
                 },
                 {
+                    id: 'entrada_6',
                     name: 'Carne de Sol com Macaxeira',
                     description: 'Carne de sol salteada na manteiga da terra e cebolas roxas, servida com macaxeira cremosa e cubos de queijo coalho.',
                     price: 'R$ 39,90',
@@ -1932,13 +1757,15 @@
                     emoji: '🥩'
                 },
                 {
+                    id: 'entrada_7',
                     name: 'Sol do Sertão',
                     description: 'Chips crocantes de macaxeira servidas com carne de sol desfiada e creme de nata.',
                     price: 'R$ 29,90',
                     category: 'entradas',
-                    emoji: '🌞'
+                    emoji: '🥩'
                 },
                 {
+                    id: 'entrada_8',
                     name: 'Batata Frita',
                     description: 'Palitos de batata inglesa crocantes com raspas de queijo e molho da casa.',
                     price: 'R$ 16,90',
@@ -1946,6 +1773,7 @@
                     emoji: '🍟'
                 },
                 {
+                    id: 'entrada_9',
                     name: 'Franguim Avuado',
                     description: 'Meio da asa marinada no sous vide, frita e servida com molho barbecue asiático de abacaxi e gergelim.',
                     price: 'R$ 29,90',
@@ -1953,6 +1781,7 @@
                     emoji: '🍗'
                 },
                 {
+                    id: 'entrada_10',
                     name: 'Croquetas Caipira',
                     description: 'Croquetas de frango recheadas com milho e bacon.',
                     price: 'R$ 19,90',
@@ -1960,6 +1789,7 @@
                     emoji: '🌽'
                 },
                 {
+                    id: 'entrada_11',
                     name: 'Sushi de Carrazera',
                     description: 'Sushi crocante com massa de macaxeira, cubos de charque e carne de sol, servido com molho de rapadura.',
                     price: 'R$ 34,90',
@@ -1967,6 +1797,7 @@
                     emoji: '🍣'
                 },
                 {
+                    id: 'entrada_12',
                     name: 'Isca de Tucunaré',
                     description: 'Tiras de tucunaré à milanesa servidas com molho rosé.',
                     price: 'R$ 32,90',
@@ -1974,6 +1805,7 @@
                     emoji: '🐟'
                 },
                 {
+                    id: 'entrada_13',
                     name: 'Filé no Panne',
                     description: 'Tiras de filé mignon salteadas com creme de gorgonzola, servidas no pão italiano quentinho.',
                     price: 'R$ 79,90',
@@ -1981,6 +1813,7 @@
                     emoji: '🥩'
                 },
                 {
+                    id: 'entrada_14',
                     name: 'Ai Meu Coração',
                     description: 'Coração de galinha marinado no shoyu, salteado no molho oriental e servido com chips de macaxeira.',
                     price: 'R$ 32,90',
@@ -1988,47 +1821,24 @@
                     emoji: '❤️'
                 },
                 {
+                    id: 'entrada_15',
                     name: 'Camarão Alho e Óleo',
                     description: 'Camarão com casca salteado no azeite de oliva, alho e limão.',
                     price: 'R$ 54,90',
                     category: 'entradas',
-                    emoji: '🦐'
-                }
-            ];
-
-            try {
-                showNotification('🍤 Cadastrando petiscos e pratos no Firebase...');
-                
-                let addedCount = 0;
-                for (const dish of dishesToAdd) {
-                    await dbManager.saveDish({
-                        ...dish,
-                        imageUrl: ''
-                    });
-                    addedCount++;
-                    console.log(`✅ Adicionado: ${dish.name}`);
-                }
-                
-                showNotification(`🎉 ${addedCount} pratos cadastrados com sucesso no Firebase!`);
-                console.log(`🎉 Total de ${addedCount} pratos adicionados ao Firebase!`);
-                
-            } catch (error) {
-                console.error('❌ Erro ao cadastrar pratos:', error);
-                showNotification('❌ Erro ao cadastrar alguns pratos');
-            }
-        }
-
-        // Function to add main dishes to Firebase
-        async function addMainDishesToFirebase() {
-            const mainDishes = [
+                    emoji: '🍤'
+                },
+                // Pratos Principais
                 {
+                    id: 'prato_1',
                     name: 'Camarão João Pessoa',
                     description: 'Arroz gratinado de camarão puxado à base de moqueca e servido com camarões empanados.',
                     price: 'R$ 149,90',
                     category: 'pratos-principais',
-                    emoji: '🦐'
+                    emoji: '🍤'
                 },
                 {
+                    id: 'prato_2',
                     name: 'Filé à Parmegiana Dupla',
                     description: 'Tradicional filé empanado com molho de tomate italiano e gratinado de mussarela, servido com massa grano duro.',
                     price: 'R$ 129,90',
@@ -2036,6 +1846,7 @@
                     emoji: '🍝'
                 },
                 {
+                    id: 'prato_3',
                     name: 'Picanha Trinchada',
                     description: 'Steaks de picanha selada na chapa com manteiga de ervas, sal temperado e cebolas roxas. Acompanha macaxeira cremosa, arroz de brócolis, farofa e vinagrete.',
                     price: 'R$ 79,90',
@@ -2043,20 +1854,23 @@
                     emoji: '🥩'
                 },
                 {
+                    id: 'prato_4',
                     name: 'Picanha Completa',
                     description: 'Picanha trinchada grelhada na chapa com temperos especiais e acompanhamentos tradicionais.',
                     price: 'R$ 159,00',
                     category: 'pratos-principais',
-                    emoji: '🔥'
+                    emoji: '🥩'
                 },
                 {
+                    id: 'prato_5',
                     name: 'Filé de Seu Pedro',
                     description: 'Medalhões de filé mignon selados e flambados servidos com creme de gorgonzola. Acompanha arroz à piemontese.',
                     price: 'R$ 189,00',
                     category: 'pratos-principais',
-                    emoji: '👨‍🍳'
+                    emoji: '🥩'
                 },
                 {
+                    id: 'prato_6',
                     name: 'Costela de Bacurim',
                     description: 'Costela suína assada lentamente e regada com barbecue de abacaxi. Acompanha batatas rústicas temperadas com o tempero do chef.',
                     price: 'R$ 79,90',
@@ -2065,239 +1879,22 @@
                 }
             ];
 
-            try {
-                showNotification('🍽️ Cadastrando pratos principais no Firebase...');
-                
-                let addedCount = 0;
-                for (const dish of mainDishes) {
-                    await dbManager.saveDish({
-                        ...dish,
-                        imageUrl: ''
-                    });
-                    addedCount++;
-                    console.log(`✅ Adicionado: ${dish.name}`);
-                }
-                
-                showNotification(`🎉 ${addedCount} pratos principais cadastrados com sucesso!`);
-                console.log(`🎉 Total de ${addedCount} pratos principais adicionados ao Firebase!`);
-                
-            } catch (error) {
-                console.error('❌ Erro ao cadastrar pratos principais:', error);
-                showNotification('❌ Erro ao cadastrar alguns pratos principais');
-            }
+            allDishes = dishes;
+            localStorage.setItem('dishes', JSON.stringify(allDishes));
+            dbManager.renderAllDishes();
+            
+            console.log(`✅ ${dishes.length} pratos inicializados!`);
+            showNotification(`🍽️ ${dishes.length} pratos carregados no cardápio!`);
         }
 
-        // Function to add executive dishes to Firebase
-        async function addExecutiveDishesToFirebase() {
-            const executiveDishes = [
-                {
-                    name: 'Cumê de Rico',
-                    description: 'Arroz cremoso ao molho branco, puxado com camarões salteados e camarões empanados.',
-                    price: 'R$ 49,90',
-                    category: 'executivos',
-                    emoji: '🦐'
-                },
-                {
-                    name: 'Boi Bêbo',
-                    description: 'Costela bovina marinada na cerveja preta e ervas, assada levemente ao vapor e servida com arroz de jerimum e cebolinho.',
-                    price: 'R$ 39,90',
-                    category: 'executivos',
-                    emoji: '🍺'
-                },
-                {
-                    name: 'Cumêzim de Vó',
-                    description: 'Arroz vermelho cozido ao leite, servido com chips de macaxeira crocante e carne de sol desfiada.',
-                    price: 'R$ 32,90',
-                    category: 'executivos',
-                    emoji: '👵'
-                },
-                {
-                    name: 'Filé à Parmegiana',
-                    description: 'Filé empanado com molho de tomate italiano e gratinado de mussarela, servido com massa italiana.',
-                    price: 'R$ 59,90',
-                    category: 'executivos',
-                    emoji: '🍝'
-                },
-                {
-                    name: 'Baião de 4',
-                    description: 'Baião de feijão verde puxado com carne de sol, queijo coalho, charque e torresmo, servido com couve frita.',
-                    price: 'R$ 49,90',
-                    category: 'executivos',
-                    emoji: '🌱'
-                },
-                {
-                    name: 'Camarão do Chef',
-                    description: 'Massa italiana com molho bisque de camarão, finalizada com tomates confitados e camarões salteados.',
-                    price: 'R$ 72,90',
-                    category: 'executivos',
-                    emoji: '👨‍🍳'
-                },
-                {
-                    name: 'Frango à Parmegiana',
-                    description: 'Filé de frango empanado com molho de tomate italiano e gratinado de mussarela, servido com massa italiana.',
-                    price: 'R$ 34,90',
-                    category: 'executivos',
-                    emoji: '🐔'
-                },
-                {
-                    name: 'Frango à Parmegiana Trinchada',
-                    description: 'Filé de frango trinchado com molho de tomate italiano e gratinado de mussarela.',
-                    price: 'R$ 34,90',
-                    category: 'executivos',
-                    emoji: '🍗'
-                },
-                {
-                    name: 'Camarão à Romana',
-                    description: 'Camarões inteiros com molho rosé e gratinado de mussarela.',
-                    price: 'R$ 49,90',
-                    category: 'executivos',
-                    emoji: '🦐'
-                },
-                {
-                    name: 'Arroz à Piemontese',
-                    description: 'Arroz cremoso com quatro queijos.',
-                    price: 'R$ 14,90',
-                    category: 'executivos',
-                    emoji: '🧀'
-                },
-                {
-                    name: 'Franguim Magrim',
-                    description: 'Filé de frango cozido levemente no suco, grelhado na chapa e servido com arroz branco e mix de salada crua.',
-                    price: 'R$ 39,90',
-                    category: 'executivos',
-                    emoji: '🥗'
-                }
-            ];
-
-            try {
-                showNotification('🍽️ Cadastrando pratos executivos no Firebase...');
-                
-                let addedCount = 0;
-                for (const dish of executiveDishes) {
-                    await dbManager.saveDish({
-                        ...dish,
-                        imageUrl: ''
-                    });
-                    addedCount++;
-                    console.log(`✅ Adicionado: ${dish.name}`);
-                }
-                
-                showNotification(`🎉 ${addedCount} pratos executivos cadastrados com sucesso!`);
-                console.log(`🎉 Total de ${addedCount} pratos executivos adicionados ao Firebase!`);
-                
-            } catch (error) {
-                console.error('❌ Erro ao cadastrar pratos executivos:', error);
-                showNotification('❌ Erro ao cadastrar alguns pratos executivos');
-            }
-        }
-
-        // Function to add desserts to Firebase
-        async function addDessertsToFirebase() {
-            const desserts = [
-                {
-                    name: 'Dirmantelo de Goiabada',
-                    description: 'Brûlée de creme de queijo de manteiga com calda de goiabada, crumble de biscoito e castanha de caju.',
-                    price: 'R$ 32,90',
-                    category: 'sobremesas',
-                    emoji: '🍮'
-                },
-                {
-                    name: 'Pudim Matuto',
-                    description: 'Tradicional pudim feito com leite de coco e calda de rapadura.',
-                    price: 'R$ 19,90',
-                    category: 'sobremesas',
-                    emoji: '🥥'
-                },
-                {
-                    name: 'Bagaceira de Chocolate',
-                    description: 'Gran Gateau de chocolate servido com picolé crocante.',
-                    price: 'R$ 32,90',
-                    category: 'sobremesas',
-                    emoji: '🍫'
-                },
-                {
-                    name: 'Cocada Quente',
-                    description: 'Cocada cremosa assada ao forno com brûlée e sorvete de creme.',
-                    price: 'R$ 34,90',
-                    category: 'sobremesas',
-                    emoji: '🥥'
-                },
-                {
-                    name: 'Surpresa de Morango',
-                    description: 'Creme de baunilha, sorvete de creme e geleia de morango.',
-                    price: 'R$ 34,90',
-                    category: 'sobremesas',
-                    emoji: '🍓'
-                }
-            ];
-
-            try {
-                showNotification('🍰 Cadastrando sobremesas no Firebase...');
-                
-                let addedCount = 0;
-                for (const dessert of desserts) {
-                    await dbManager.saveDish({
-                        ...dessert,
-                        imageUrl: ''
-                    });
-                    addedCount++;
-                    console.log(`✅ Adicionado: ${dessert.name}`);
-                }
-                
-                showNotification(`🎉 ${addedCount} sobremesas cadastradas com sucesso!`);
-                console.log(`🎉 Total de ${addedCount} sobremesas adicionadas ao Firebase!`);
-                
-            } catch (error) {
-                console.error('❌ Erro ao cadastrar sobremesas:', error);
-                showNotification('❌ Erro ao cadastrar algumas sobremesas');
-            }
-        }
-
-        // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             loadRestaurantInfo();
             
-            // Always load from localStorage first for immediate display
-            console.log('📱 Carregando dados locais para exibição imediata...');
-            dbManager.loadFromLocalStorage();
-            
-            // Then try to sync with Firebase
-            setTimeout(async () => {
-                if (window.db && navigator.onLine) {
-                    try {
-                        console.log('🔄 Tentando sincronizar com Firebase...');
-                        const connected = await testFirebaseConnection();
-                        
-                        if (connected) {
-                            // Check if we need to populate Firebase with default data
-                            const querySnapshot = await window.firestore.getDocs(
-                                window.firestore.collection(window.db, 'dishes')
-                            );
-                            
-                            if (querySnapshot.size === 0) {
-                                console.log('🍽️ Firebase vazio, cadastrando pratos padrão...');
-                                await addAllDishesToFirebase();
-                                await addMainDishesToFirebase();
-                                await addExecutiveDishesToFirebase();
-                                await addDessertsToFirebase();
-                            } else {
-                                // Load fresh data from Firebase
-                                console.log('📥 Carregando dados atualizados do Firebase...');
-                                await dbManager.loadDishes();
-                            }
-                        }
-                    } catch (error) {
-                        console.warn('⚠️ Erro na sincronização, mantendo dados locais:', error);
-                        showNotification('📱 Usando dados salvos localmente');
-                    }
-                } else {
-                    console.log('📱 Offline ou Firebase indisponível - usando dados locais');
-                    if (navigator.onLine === false) {
-                        showNotification('📱 Modo offline ativo');
-                    }
-                }
+            // Initialize dishes after a short delay
+            setTimeout(() => {
+                initializeDishes();
             }, 1000);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98954931b1a52755',t:'MTc1OTU4NzI2OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9895912b73902755',t:'MTc1OTU5MDIxNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
