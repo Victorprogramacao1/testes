@@ -9,6 +9,32 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js';
+        
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKqzZnPBf98kXGVqP_i029eFtkGomaO3s",
+            authDomain: "cardapioprincipal.firebaseapp.com",
+            projectId: "cardapioprincipal",
+            storageBucket: "cardapioprincipal.firebasestorage.app",
+            messagingSenderId: "1086885893",
+            appId: "1:1086885893:web:636ba9d07f43c59fb0bfcc"
+        };
+        
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Tornar disponível globalmente
+        window.db = db;
+        window.firestore = { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot };
+        
+        console.log('🔥 Firebase conectado com sucesso!');
+    </script>
+    
     <style>
         body {
             box-sizing: border-box;
@@ -160,8 +186,6 @@
             transform: scale(1.05);
         }
         
-
-        
         .modal {
             display: none;
             position: fixed;
@@ -229,6 +253,45 @@
             }
         }
 
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .sync-indicator {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .sync-indicator.syncing {
+            background: #ff9800;
+            display: block;
+        }
+
+        .sync-indicator.error {
+            background: #f44336;
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .nav-btn {
                 font-size: 14px;
@@ -252,6 +315,11 @@
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Sync Indicator -->
+    <div id="syncIndicator" class="sync-indicator">
+        <span class="loading"></span> Sincronizando...
+    </div>
+
     <!-- Header -->
     <header class="bg-white shadow-lg sticky top-0 z-50">
         <div class="container mx-auto px-4 py-4">
@@ -261,12 +329,12 @@
                         <img src="https://blogger.googleusercontent.com/img/a/AVvXsEhtI8TskeLJv2S49G5NbBX_Q2-qmkJxU6mSkJLwoKCCe5qa6_HSm2n0XEvT0g11B7GUgXrs9iZ6feAlvrnFecAogM5L0P0nmTEPzrwUvJ3p8qKgtliQvWA1Ja6dUv68aV9TCNdgMoi_Qf_szWXgJQNjh-KfvjdAKN3KCF9OZEL7J84HE3YGn3wwJYzEHVuu" alt="Logo do Restaurante" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-white font-bold text-xl bg-gradient-to-r from-red-500 to-red-600 w-full h-full flex items-center justify-center rounded-full\'>R</span>';">
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-800">Cardápio Digital</h1>
-                        <p class="text-gray-600 text-sm">Sabores únicos, experiências inesquecíveis</p>
+                        <h1 id="restaurantName" class="text-2xl font-bold text-gray-800">Cardápio Digital</h1>
+                        <p id="restaurantSlogan" class="text-gray-600 text-sm">Sabores únicos, experiências inesquecíveis</p>
                     </div>
                 </div>
                 <div class="hidden md:flex items-center space-x-4">
-                    <span class="text-gray-600">📞 (83) 9179-5370</span>
+                    <span id="restaurantPhone" class="text-gray-600">📞 (83) 9179-5370</span>
                 </div>
             </div>
         </div>
@@ -401,8 +469,6 @@
                     <span class="text-xs sm:text-sm font-semibold">Bebidas</span>
                 </button>
             </div>
-
-
         </div>
     </section>
 
@@ -438,117 +504,8 @@
             <h2 class="section-title text-3xl font-bold text-gray-800 mb-8 text-left pb-4" style="font-family: 'Mediapro', sans-serif;">
                 Entradas
             </h2>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="entradasGrid">
-                <!-- Pastéis Sortidos -->
-                <div class="dish-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300" data-category="entradas">
-                    <div class="relative">
-                        <div class="h-48 bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                            <span class="text-6xl">🥟</span>
-                        </div>
-                        <div class="absolute top-4 right-4 price-tag text-white px-3 py-1 rounded-full text-sm font-bold">
-                            R$ 29,90
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Pastéis Sortidos</h3>
-                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">Pastéis de carne, pepperoni, costela e carne de sol.</p>
-                        <button onclick="openWhatsApp('Pastéis Sortidos - R$ 29,90')" class="whatsapp-btn w-full text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                            </svg>
-                            Pedir Agora
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Pastéis de Camarão -->
-                <div class="dish-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300" data-category="entradas">
-                    <div class="relative">
-                        <div class="h-48 bg-gradient-to-br from-pink-400 to-orange-500 flex items-center justify-center">
-                            <span class="text-6xl">🦐</span>
-                        </div>
-                        <div class="absolute top-4 right-4 price-tag text-white px-3 py-1 rounded-full text-sm font-bold">
-                            R$ 34,90
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Pastéis de Camarão</h3>
-                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">Pastéis com cream cheese e creme de camarão, servidos com molho de ervas.</p>
-                        <button onclick="openWhatsApp('Pastéis de Camarão - R$ 34,90')" class="whatsapp-btn w-full text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                            </svg>
-                            Pedir Agora
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Fritapá de Camarão -->
-                <div class="dish-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300" data-category="entradas">
-                    <div class="relative">
-                        <div class="h-48 bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
-                            <span class="text-6xl">🍤</span>
-                        </div>
-                        <div class="absolute top-4 right-4 price-tag text-white px-3 py-1 rounded-full text-sm font-bold">
-                            R$ 25,90
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Fritapá de Camarão</h3>
-                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">Bolinho frito de vatapá de camarão com base de moqueca, crocante por fora e cremoso por dentro.</p>
-                        <button onclick="openWhatsApp('Fritapá de Camarão - R$ 25,90')" class="whatsapp-btn w-full text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                            </svg>
-                            Pedir Agora
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Ensopado de Vaca Atolada -->
-                <div class="dish-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300" data-category="entradas">
-                    <div class="relative">
-                        <div class="h-48 bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center">
-                            <span class="text-6xl">🍲</span>
-                        </div>
-                        <div class="absolute top-4 right-4 price-tag text-white px-3 py-1 rounded-full text-sm font-bold">
-                            R$ 15,90
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Ensopado de Vaca Atolada</h3>
-                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">Caldinho cremoso de costela com macaxeira.</p>
-                        <button onclick="openWhatsApp('Ensopado de Vaca Atolada - R$ 15,90')" class="whatsapp-btn w-full text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                            </svg>
-                            Pedir Agora
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Caldo da Caridade -->
-                <div class="dish-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300" data-category="entradas">
-                    <div class="relative">
-                        <div class="h-48 bg-gradient-to-br from-red-600 to-orange-700 flex items-center justify-center">
-                            <span class="text-6xl">🥣</span>
-                        </div>
-                        <div class="absolute top-4 right-4 price-tag text-white px-3 py-1 rounded-full text-sm font-bold">
-                            R$ 16,90
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Caldo da Caridade</h3>
-                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">Caldo de carne moída com legumes.</p>
-                        <button onclick="openWhatsApp('Caldo da Caridade - R$ 16,90')" class="whatsapp-btn w-full text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                            </svg>
-                            Pedir Agora
-                        </button>
-                    </div>
-                </div>
+                <!-- Entradas will be loaded from database -->
             </div>
         </div>
 
@@ -557,9 +514,8 @@
             <h2 class="section-title text-3xl font-bold text-gray-800 mb-8 text-left pb-4" style="font-family: 'Mediapro', sans-serif;">
                 Pratos Principais
             </h2>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="pratosGrid">
-                <!-- Pratos principais will be populated by JavaScript -->
+                <!-- Pratos principais will be loaded from database -->
             </div>
         </div>
 
@@ -568,9 +524,8 @@
             <h2 class="section-title text-3xl font-bold text-gray-800 mb-8 text-left pb-4" style="font-family: 'Mediapro', sans-serif;">
                 Pratos Executivos
             </h2>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="executivosGrid">
-                <!-- Pratos executivos will be populated by JavaScript -->
+                <!-- Pratos executivos will be loaded from database -->
             </div>
         </div>
 
@@ -579,9 +534,8 @@
             <h2 class="section-title text-3xl font-bold text-gray-800 mb-8 text-left pb-4" style="font-family: 'Mediapro', sans-serif;">
                 Sobremesas
             </h2>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="sobremesasGrid">
-                <!-- Sobremesas will be populated by JavaScript -->
+                <!-- Sobremesas will be loaded from database -->
             </div>
         </div>
     </div>
@@ -598,19 +552,10 @@
         </svg>
     </button>
 
-
-
     <!-- Modal para visualizar imagens -->
     <div id="imageModal" class="modal">
         <span class="close" onclick="closeModal()">&times;</span>
         <img class="modal-content" id="modalImage" alt="Imagem ampliada">
-    </div>
-
-    <!-- Notification -->
-    <div id="notification" class="notification">
-        🎉 Deixe seu feedback e ganhe 5% de desconto na sua conta!
-        <br>
-        <small>Clique aqui para avaliar nosso serviço</small>
     </div>
 
     <!-- Footer -->
@@ -640,8 +585,398 @@
     </footer>
 
     <script>
-        // Banner Carousel
+        // Global variables
         let currentSlide = 0;
+        let adminClickCount = 0;
+        let adminClickTimer = null;
+        let isAdminMode = false;
+        let allDishes = [];
+        let restaurantInfo = {
+            name: 'Cardápio Digital',
+            slogan: 'Sabores únicos, experiências inesquecíveis',
+            phone: '📞 (83) 9179-5370'
+        };
+
+        // Database functions
+        class DatabaseManager {
+            constructor() {
+                this.isOnline = navigator.onLine;
+                this.setupOfflineHandling();
+            }
+
+            setupOfflineHandling() {
+                window.addEventListener('online', () => {
+                    this.isOnline = true;
+                    this.syncOfflineChanges();
+                });
+                
+                window.addEventListener('offline', () => {
+                    this.isOnline = false;
+                    showNotification('📱 Modo offline ativado');
+                });
+            }
+
+            showSyncIndicator(type = 'syncing') {
+                const indicator = document.getElementById('syncIndicator');
+                indicator.className = `sync-indicator ${type}`;
+                
+                if (type === 'syncing') {
+                    indicator.innerHTML = '<span class="loading"></span> Sincronizando...';
+                } else if (type === 'error') {
+                    indicator.innerHTML = '❌ Erro na sincronização';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                    }, 3000);
+                }
+            }
+
+            hideSyncIndicator() {
+                document.getElementById('syncIndicator').style.display = 'none';
+            }
+
+            async loadDishes() {
+                try {
+                    if (!this.isOnline) {
+                        return this.loadFromLocalStorage();
+                    }
+
+                    this.showSyncIndicator('syncing');
+                    
+                    const querySnapshot = await window.firestore.getDocs(
+                        window.firestore.collection(window.db, 'dishes')
+                    );
+                    
+                    allDishes = [];
+                    querySnapshot.forEach((doc) => {
+                        allDishes.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    // Save to localStorage for offline use
+                    localStorage.setItem('dishes', JSON.stringify(allDishes));
+                    
+                    this.hideSyncIndicator();
+                    this.renderAllDishes();
+                    
+                } catch (error) {
+                    console.error('Erro ao carregar pratos:', error);
+                    this.showSyncIndicator('error');
+                    
+                    // Fallback to localStorage
+                    this.loadFromLocalStorage();
+                }
+            }
+
+            loadFromLocalStorage() {
+                const savedDishes = localStorage.getItem('dishes');
+                if (savedDishes) {
+                    allDishes = JSON.parse(savedDishes);
+                    this.renderAllDishes();
+                } else {
+                    // Load default dishes if no data exists
+                    this.loadDefaultDishes();
+                }
+            }
+
+            loadDefaultDishes() {
+                allDishes = [
+                    {
+                        id: 'default1',
+                        name: 'Pastéis Sortidos',
+                        description: 'Pastéis de carne, pepperoni, costela e carne de sol.',
+                        price: 'R$ 29,90',
+                        category: 'entradas',
+                        emoji: '🥟',
+                        imageUrl: ''
+                    },
+                    {
+                        id: 'default2',
+                        name: 'Pastéis de Camarão',
+                        description: 'Pastéis com cream cheese e creme de camarão, servidos com molho de ervas.',
+                        price: 'R$ 34,90',
+                        category: 'entradas',
+                        emoji: '🦐',
+                        imageUrl: ''
+                    },
+                    {
+                        id: 'default3',
+                        name: 'Fritapá de Camarão',
+                        description: 'Bolinho frito de vatapá de camarão com base de moqueca, crocante por fora e cremoso por dentro.',
+                        price: 'R$ 25,90',
+                        category: 'entradas',
+                        emoji: '🍤',
+                        imageUrl: ''
+                    },
+                    {
+                        id: 'default4',
+                        name: 'Ensopado de Vaca Atolada',
+                        description: 'Caldinho cremoso de costela com macaxeira.',
+                        price: 'R$ 15,90',
+                        category: 'entradas',
+                        emoji: '🍲',
+                        imageUrl: ''
+                    },
+                    {
+                        id: 'default5',
+                        name: 'Caldo da Caridade',
+                        description: 'Caldo de carne moída com legumes.',
+                        price: 'R$ 16,90',
+                        category: 'entradas',
+                        emoji: '🥣',
+                        imageUrl: ''
+                    },
+                    {
+                        id: 'default6',
+                        name: 'Carne de Sol com Macaxeira',
+                        description: 'Carne de sol salteada na manteiga da terra e cebolas roxas, servida com macaxeira cremosa e cubos de queijo coalho.',
+                        price: 'R$ 39,90',
+                        category: 'entradas',
+                        emoji: '🥩',
+                        imageUrl: ''
+                    },
+                    {
+                        id: 'default7',
+                        name: 'Sol do Sertão',
+                        description: 'Chips crocantes de macaxeira servidas com carne de sol desfiada e creme de nata.',
+                        price: 'R$ 29,90',
+                        category: 'entradas',
+                        emoji: '🌞',
+                        imageUrl: ''
+                    },
+                    {
+                        id: 'default8',
+                        name: 'Batata Frita',
+                        description: 'Palitos de batata inglesa crocantes com raspas de queijo e molho da casa.',
+                        price: 'R$ 16,90',
+                        category: 'entradas',
+                        emoji: '🍟',
+                        imageUrl: ''
+                    },
+                    {
+                        id: 'default9',
+                        name: 'Franguim Avuado',
+                        description: 'Meio da asa marinada no sous vide, frita e servida com molho barbecue asiático de abacaxi e gergelim.',
+                        price: 'R$ 29,90',
+                        category: 'entradas',
+                        emoji: '🍗',
+                        imageUrl: ''
+                    },
+                    {
+                        id: 'default10',
+                        name: 'Croquetas Caipira',
+                        description: 'Croquetas de frango recheadas com milho e bacon.',
+                        price: 'R$ 19,90',
+                        category: 'entradas',
+                        emoji: '🌽',
+                        imageUrl: ''
+                    }
+                ];
+                this.renderAllDishes();
+            }
+
+            async saveDish(dishData) {
+                try {
+                    if (this.isOnline) {
+                        this.showSyncIndicator('syncing');
+                        
+                        const docRef = await window.firestore.addDoc(
+                            window.firestore.collection(window.db, 'dishes'),
+                            dishData
+                        );
+                        
+                        dishData.id = docRef.id;
+                        this.hideSyncIndicator();
+                    } else {
+                        // Generate temporary ID for offline
+                        dishData.id = 'temp_' + Date.now();
+                        dishData._offline = true;
+                    }
+
+                    allDishes.push(dishData);
+                    localStorage.setItem('dishes', JSON.stringify(allDishes));
+                    this.renderAllDishes();
+                    
+                    return dishData.id;
+                    
+                } catch (error) {
+                    console.error('Erro ao salvar prato:', error);
+                    this.showSyncIndicator('error');
+                    throw error;
+                }
+            }
+
+            async updateDish(dishId, dishData) {
+                try {
+                    if (this.isOnline && !dishId.startsWith('temp_')) {
+                        this.showSyncIndicator('syncing');
+                        
+                        const dishRef = window.firestore.doc(window.db, 'dishes', dishId);
+                        await window.firestore.updateDoc(dishRef, dishData);
+                        
+                        this.hideSyncIndicator();
+                    } else {
+                        dishData._offline = true;
+                    }
+
+                    // Update local array
+                    const index = allDishes.findIndex(dish => dish.id === dishId);
+                    if (index !== -1) {
+                        allDishes[index] = { ...allDishes[index], ...dishData };
+                        localStorage.setItem('dishes', JSON.stringify(allDishes));
+                        this.renderAllDishes();
+                    }
+                    
+                } catch (error) {
+                    console.error('Erro ao atualizar prato:', error);
+                    this.showSyncIndicator('error');
+                    throw error;
+                }
+            }
+
+            async deleteDish(dishId) {
+                try {
+                    if (this.isOnline && !dishId.startsWith('temp_')) {
+                        this.showSyncIndicator('syncing');
+                        
+                        await window.firestore.deleteDoc(
+                            window.firestore.doc(window.db, 'dishes', dishId)
+                        );
+                        
+                        this.hideSyncIndicator();
+                    }
+
+                    // Remove from local array
+                    allDishes = allDishes.filter(dish => dish.id !== dishId);
+                    localStorage.setItem('dishes', JSON.stringify(allDishes));
+                    this.renderAllDishes();
+                    
+                } catch (error) {
+                    console.error('Erro ao deletar prato:', error);
+                    this.showSyncIndicator('error');
+                    throw error;
+                }
+            }
+
+            async syncOfflineChanges() {
+                const offlineDishes = allDishes.filter(dish => dish._offline);
+                
+                if (offlineDishes.length === 0) return;
+
+                this.showSyncIndicator('syncing');
+                
+                try {
+                    for (const dish of offlineDishes) {
+                        if (dish.id.startsWith('temp_')) {
+                            // New dish created offline
+                            const { id, _offline, ...dishData } = dish;
+                            const docRef = await window.firestore.addDoc(
+                                window.firestore.collection(window.db, 'dishes'),
+                                dishData
+                            );
+                            
+                            // Update local ID
+                            const index = allDishes.findIndex(d => d.id === id);
+                            if (index !== -1) {
+                                allDishes[index].id = docRef.id;
+                                delete allDishes[index]._offline;
+                            }
+                        } else {
+                            // Updated dish offline
+                            const { _offline, ...dishData } = dish;
+                            const dishRef = window.firestore.doc(window.db, 'dishes', dish.id);
+                            await window.firestore.updateDoc(dishRef, dishData);
+                            
+                            delete dish._offline;
+                        }
+                    }
+                    
+                    localStorage.setItem('dishes', JSON.stringify(allDishes));
+                    this.hideSyncIndicator();
+                    showNotification('✅ Dados sincronizados com sucesso!');
+                    
+                } catch (error) {
+                    console.error('Erro na sincronização:', error);
+                    this.showSyncIndicator('error');
+                }
+            }
+
+            renderAllDishes() {
+                // Clear all grids
+                document.getElementById('entradasGrid').innerHTML = '';
+                document.getElementById('pratosGrid').innerHTML = '';
+                document.getElementById('executivosGrid').innerHTML = '';
+                document.getElementById('sobremesasGrid').innerHTML = '';
+
+                // Group dishes by category
+                const categories = {
+                    'entradas': document.getElementById('entradasGrid'),
+                    'pratos-principais': document.getElementById('pratosGrid'),
+                    'executivos': document.getElementById('executivosGrid'),
+                    'sobremesas': document.getElementById('sobremesasGrid')
+                };
+
+                allDishes.forEach(dish => {
+                    const dishCard = this.createDishCard(dish);
+                    const targetGrid = categories[dish.category] || categories['entradas'];
+                    targetGrid.appendChild(dishCard);
+                });
+
+                // Add admin controls if in admin mode
+                if (isAdminMode) {
+                    setTimeout(() => {
+                        addEditButtons();
+                    }, 100);
+                }
+            }
+
+            createDishCard(dish) {
+                const gradients = [
+                    'from-orange-400 to-red-500',
+                    'from-pink-400 to-orange-500',
+                    'from-yellow-400 to-orange-500',
+                    'from-green-400 to-blue-500',
+                    'from-purple-400 to-pink-500',
+                    'from-blue-400 to-purple-500'
+                ];
+                const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+
+                const card = document.createElement('div');
+                card.className = 'dish-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300';
+                card.setAttribute('data-category', dish.category);
+                card.setAttribute('data-dish-id', dish.id);
+
+                card.innerHTML = `
+                    <div class="relative">
+                        <div class="h-48 bg-gradient-to-br ${randomGradient} flex items-center justify-center">
+                            ${dish.imageUrl ? 
+                                `<img src="${dish.imageUrl}" alt="${dish.name}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\\'text-6xl\\'>${dish.emoji}</span>';">` :
+                                `<span class="text-6xl">${dish.emoji}</span>`
+                            }
+                        </div>
+                        <div class="absolute top-4 right-4 price-tag text-white px-3 py-1 rounded-full text-sm font-bold">
+                            ${dish.price}
+                        </div>
+                        ${dish._offline ? '<div class="absolute top-4 left-4 bg-orange-500 text-white px-2 py-1 rounded text-xs">📱 Offline</div>' : ''}
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">${dish.name}</h3>
+                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">${dish.description}</p>
+                        <button onclick="openWhatsApp('${dish.name} - ${dish.price}')" class="whatsapp-btn w-full text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                            </svg>
+                            Pedir Agora
+                        </button>
+                    </div>
+                `;
+
+                return card;
+            }
+        }
+
+        // Initialize database manager
+        const dbManager = new DatabaseManager();
+
+        // Banner Carousel
         const slides = document.querySelectorAll('.banner-slide');
         const indicators = document.querySelectorAll('.banner-indicator');
         
@@ -669,87 +1004,47 @@
                 showSlide(currentSlide);
             });
         });
-        
-        // Category Filter
-        const categoryButtons = document.querySelectorAll('.category-btn');
-        const dishCards = document.querySelectorAll('.dish-card');
-        
-        categoryButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const category = button.dataset.category;
-                
-                // Update active button
-                categoryButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                
-                // Filter dishes
-                dishCards.forEach(card => {
-                    if (category === 'all' || card.dataset.category === category) {
-                        card.style.display = 'block';
-                        setTimeout(() => {
-                            card.style.opacity = '1';
-                            card.style.transform = 'translateY(0)';
-                        }, 100);
-                    } else {
-                        card.style.opacity = '0';
-                        card.style.transform = 'translateY(20px)';
-                        setTimeout(() => {
-                            card.style.display = 'none';
-                        }, 300);
-                    }
-                });
-            });
-        });
-        
 
-        
+        // Utility functions
         function showNotification(message) {
-            // Create notification element
             const notification = document.createElement('div');
             notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
             notification.textContent = message;
             
             document.body.appendChild(notification);
             
-            // Show notification
             setTimeout(() => {
                 notification.classList.remove('translate-x-full');
             }, 100);
             
-            // Hide notification
             setTimeout(() => {
                 notification.classList.add('translate-x-full');
                 setTimeout(() => {
-                    document.body.removeChild(notification);
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
                 }, 300);
             }, 3000);
         }
-        
-        // Scroll to section function
+
         function scrollToSection(sectionId) {
             const section = document.getElementById(sectionId);
             if (section) {
                 section.scrollIntoView({ behavior: 'smooth' });
-            } else {
-                // If section doesn't exist, scroll to menu
-                document.getElementById('menu-container').scrollIntoView({ behavior: 'smooth' });
             }
         }
-        
-        // Search functionality
+
         function searchDishes() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const clearButton = document.getElementById('clearSearch');
             const dishCards = document.querySelectorAll('.dish-card');
             
-            // Show/hide clear button
             if (searchTerm.length > 0) {
                 clearButton.classList.remove('hidden');
             } else {
                 clearButton.classList.add('hidden');
             }
             
-            // Filter dishes
             dishCards.forEach(card => {
                 const dishName = card.querySelector('h3').textContent.toLowerCase();
                 const dishDescription = card.querySelector('p').textContent.toLowerCase();
@@ -774,7 +1069,6 @@
             document.getElementById('searchInput').value = '';
             document.getElementById('clearSearch').classList.add('hidden');
             
-            // Show all dishes
             const dishCards = document.querySelectorAll('.dish-card');
             dishCards.forEach(card => {
                 card.style.display = 'block';
@@ -782,16 +1076,14 @@
                 card.style.transform = 'translateY(0)';
             });
         }
-        
-        // Navigation functions
+
         function showPrecoBaixo() {
-            // Filter dishes by price (under R$ 25)
             const dishCards = document.querySelectorAll('.dish-card');
             dishCards.forEach(card => {
                 const priceText = card.querySelector('.price-tag').textContent;
                 const price = parseFloat(priceText.replace('R$', '').replace(',', '.'));
                 
-                if (price <= 25) {
+                if (price <= 50) {
                     card.style.display = 'block';
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
@@ -831,8 +1123,16 @@
             
             window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
         }
-        
-        // Modal functions
+
+        function openWhatsApp(source) {
+            const whatsappNumber = '5583991795370';
+            const message = `Olá! Vim através do ${source} e gostaria de fazer um pedido.`;
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+            
+            window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+        }
+
         function openModal(imageSrc) {
             const modal = document.getElementById('imageModal');
             const modalImg = document.getElementById('modalImage');
@@ -844,37 +1144,13 @@
             document.getElementById('imageModal').style.display = 'none';
         }
         
-        // Close modal when clicking outside the image
         window.onclick = function(event) {
             const modal = document.getElementById('imageModal');
             if (event.target == modal) {
                 modal.style.display = 'none';
             }
         }
-        
-        // WhatsApp functions
-        function openWhatsApp(source) {
-            const whatsappNumber = '5583991795370';
-            const message = `Olá! Vim através do ${source} e gostaria de fazer um pedido.`;
-            const encodedMessage = encodeURIComponent(message);
-            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-            
-            window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-        }
-        
-        // WhatsApp contact button
-        document.querySelector('.whatsapp-btn').addEventListener('click', function(e) {
-            if (this.textContent.includes('Contato')) {
-                const whatsappNumber = '5583991795370'; // Número atualizado
-                const message = 'Olá! Gostaria de saber mais sobre o cardápio.';
-                const encodedMessage = encodeURIComponent(message);
-                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-                
-                window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-            }
-        });
 
-        // Scroll to top functionality
         function scrollToTop() {
             window.scrollTo({
                 top: 0,
@@ -895,14 +1171,9 @@
         });
 
         // Admin functionality
-        let adminClickCount = 0;
-        let adminClickTimer = null;
-        let isAdminMode = false;
-
         function handleAdminClick() {
             adminClickCount++;
             
-            // Reset counter after 2 seconds if not clicked 3 times
             if (adminClickTimer) {
                 clearTimeout(adminClickTimer);
             }
@@ -911,7 +1182,6 @@
                 adminClickCount = 0;
             }, 2000);
             
-            // If clicked 3 times, prompt for password
             if (adminClickCount === 3) {
                 adminClickCount = 0;
                 clearTimeout(adminClickTimer);
@@ -930,17 +1200,12 @@
         function activateAdminMode() {
             isAdminMode = true;
             
-            // Show admin panel
             showAdminPanel();
-            
-            // Add edit buttons to all dish cards
             addEditButtons();
             
-            // Change page styling to indicate admin mode
             document.body.style.border = '5px solid #ff0000';
             document.body.style.boxShadow = '0 0 20px rgba(255, 0, 0, 0.3)';
             
-            // Add admin indicator
             const adminIndicator = document.createElement('div');
             adminIndicator.id = 'adminIndicator';
             adminIndicator.className = 'fixed top-0 left-0 right-0 bg-red-600 text-white text-center py-2 z-50 font-bold';
@@ -964,11 +1229,14 @@
                     <button onclick="editRestaurantInfo()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded font-semibold">
                         ✏️ Editar Info do Restaurante
                     </button>
-                    <button onclick="manageBanners()" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded font-semibold">
-                        🖼️ Gerenciar Banners
-                    </button>
                     <button onclick="exportData()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded font-semibold">
                         💾 Exportar Dados
+                    </button>
+                    <button onclick="syncData()" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded font-semibold">
+                        🔄 Sincronizar
+                    </button>
+                    <button onclick="clearFirebaseData()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded font-semibold">
+                        🗑️ Limpar Firebase
                     </button>
                 </div>
             `;
@@ -977,15 +1245,16 @@
 
         function addEditButtons() {
             const dishCards = document.querySelectorAll('.dish-card');
-            dishCards.forEach((card, index) => {
+            dishCards.forEach((card) => {
                 if (!card.querySelector('.admin-controls')) {
+                    const dishId = card.getAttribute('data-dish-id');
                     const adminControls = document.createElement('div');
                     adminControls.className = 'admin-controls absolute top-2 left-2 flex gap-1';
                     adminControls.innerHTML = `
-                        <button onclick="editDish(${index})" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-semibold">
+                        <button onclick="editDish('${dishId}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-semibold">
                             ✏️
                         </button>
-                        <button onclick="deleteDish(${index})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs font-semibold">
+                        <button onclick="deleteDish('${dishId}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs font-semibold">
                             🗑️
                         </button>
                     `;
@@ -998,58 +1267,58 @@
         function deactivateAdminMode() {
             isAdminMode = false;
             
-            // Remove admin panel
             const adminPanel = document.getElementById('adminPanel');
             if (adminPanel) adminPanel.remove();
             
-            // Remove admin indicator
             const adminIndicator = document.getElementById('adminIndicator');
             if (adminIndicator) adminIndicator.remove();
             
-            // Remove edit buttons
             document.querySelectorAll('.admin-controls').forEach(control => control.remove());
             
-            // Reset page styling
             document.body.style.border = '';
             document.body.style.boxShadow = '';
             
             showNotification('❌ Modo administrador desativado');
         }
 
-        function editDish(index) {
-            const dishCards = document.querySelectorAll('.dish-card');
-            const card = dishCards[index];
-            
-            const title = card.querySelector('h3').textContent;
-            const description = card.querySelector('p').textContent;
-            const price = card.querySelector('.price-tag').textContent;
-            const emoji = card.querySelector('.text-6xl').textContent;
+        async function editDish(dishId) {
+            const dish = allDishes.find(d => d.id === dishId);
+            if (!dish) return;
             
             const editModal = document.createElement('div');
             editModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
             editModal.innerHTML = `
                 <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-96 overflow-y-auto">
                     <h3 class="text-xl font-bold mb-4">Editar Prato</h3>
-                    <form onsubmit="saveDishEdit(event, ${index})">
+                    <form onsubmit="saveDishEdit(event, '${dishId}')">
                         <div class="mb-4">
                             <label class="block text-sm font-bold mb-2">Nome do Prato:</label>
-                            <input type="text" id="editTitle" value="${title}" class="w-full border rounded px-3 py-2" required>
+                            <input type="text" id="editTitle" value="${dish.name}" class="w-full border rounded px-3 py-2" required>
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-bold mb-2">Descrição:</label>
-                            <textarea id="editDescription" class="w-full border rounded px-3 py-2 h-20" required>${description}</textarea>
+                            <textarea id="editDescription" class="w-full border rounded px-3 py-2 h-20" required>${dish.description}</textarea>
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-bold mb-2">Preço:</label>
-                            <input type="text" id="editPrice" value="${price}" class="w-full border rounded px-3 py-2" required>
+                            <input type="text" id="editPrice" value="${dish.price}" class="w-full border rounded px-3 py-2" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold mb-2">Categoria:</label>
+                            <select id="editCategory" class="w-full border rounded px-3 py-2" required>
+                                <option value="entradas" ${dish.category === 'entradas' ? 'selected' : ''}>Entradas</option>
+                                <option value="pratos-principais" ${dish.category === 'pratos-principais' ? 'selected' : ''}>Pratos Principais</option>
+                                <option value="executivos" ${dish.category === 'executivos' ? 'selected' : ''}>Pratos Executivos</option>
+                                <option value="sobremesas" ${dish.category === 'sobremesas' ? 'selected' : ''}>Sobremesas</option>
+                            </select>
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-bold mb-2">Emoji/Ícone:</label>
-                            <input type="text" id="editEmoji" value="${emoji}" class="w-full border rounded px-3 py-2" required>
+                            <input type="text" id="editEmoji" value="${dish.emoji}" class="w-full border rounded px-3 py-2" required>
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-bold mb-2">URL da Imagem (opcional):</label>
-                            <input type="url" id="editImageUrl" placeholder="https://exemplo.com/imagem.jpg" class="w-full border rounded px-3 py-2">
+                            <input type="url" id="editImageUrl" value="${dish.imageUrl || ''}" placeholder="https://exemplo.com/imagem.jpg" class="w-full border rounded px-3 py-2">
                         </div>
                         <div class="flex gap-2">
                             <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold flex-1">
@@ -1065,60 +1334,38 @@
             document.body.appendChild(editModal);
         }
 
-        function saveDishEdit(event, index) {
+        async function saveDishEdit(event, dishId) {
             event.preventDefault();
             
-            const dishCards = document.querySelectorAll('.dish-card');
-            const card = dishCards[index];
+            const dishData = {
+                name: document.getElementById('editTitle').value,
+                description: document.getElementById('editDescription').value,
+                price: document.getElementById('editPrice').value,
+                category: document.getElementById('editCategory').value,
+                emoji: document.getElementById('editEmoji').value,
+                imageUrl: document.getElementById('editImageUrl').value
+            };
             
-            const newTitle = document.getElementById('editTitle').value;
-            const newDescription = document.getElementById('editDescription').value;
-            const newPrice = document.getElementById('editPrice').value;
-            const newEmoji = document.getElementById('editEmoji').value;
-            const newImageUrl = document.getElementById('editImageUrl').value;
-            
-            // Update card content
-            card.querySelector('h3').textContent = newTitle;
-            card.querySelector('p').textContent = newDescription;
-            card.querySelector('.price-tag').textContent = newPrice;
-            
-            // Update image/emoji
-            const imageContainer = card.querySelector('.h-48');
-            if (newImageUrl) {
-                imageContainer.innerHTML = `<img src="${newImageUrl}" alt="${newTitle}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\\'text-6xl\\'>${newEmoji}</span>';">`;
-            } else {
-                imageContainer.innerHTML = `<span class="text-6xl">${newEmoji}</span>`;
+            try {
+                await dbManager.updateDish(dishId, dishData);
+                event.target.closest('.fixed').remove();
+                showNotification('✅ Prato atualizado com sucesso!');
+            } catch (error) {
+                showNotification('❌ Erro ao atualizar prato');
             }
-            
-            // Update WhatsApp button
-            const whatsappBtn = card.querySelector('.whatsapp-btn');
-            whatsappBtn.setAttribute('onclick', `openWhatsApp('${newTitle} - ${newPrice}')`);
-            
-            // Close modal
-            event.target.closest('.fixed').remove();
-            
-            showNotification('✅ Prato atualizado com sucesso!');
         }
 
-        function deleteDish(index) {
-            if (confirm('Tem certeza que deseja excluir este prato?')) {
-                const dishCards = document.querySelectorAll('.dish-card');
-                const card = dishCards[index];
-                const dishName = card.querySelector('h3').textContent;
-                
-                card.style.opacity = '0';
-                card.style.transform = 'scale(0.8)';
-                
-                setTimeout(() => {
-                    card.remove();
-                    showNotification(`🗑️ "${dishName}" foi removido do cardápio`);
-                    
-                    // Re-add edit buttons with updated indices
-                    if (isAdminMode) {
-                        document.querySelectorAll('.admin-controls').forEach(control => control.remove());
-                        addEditButtons();
-                    }
-                }, 300);
+        async function deleteDish(dishId) {
+            const dish = allDishes.find(d => d.id === dishId);
+            if (!dish) return;
+            
+            if (confirm(`Tem certeza que deseja excluir "${dish.name}"?`)) {
+                try {
+                    await dbManager.deleteDish(dishId);
+                    showNotification(`🗑️ "${dish.name}" foi removido do cardápio`);
+                } catch (error) {
+                    showNotification('❌ Erro ao excluir prato');
+                }
             }
         }
 
@@ -1172,86 +1419,28 @@
             document.body.appendChild(addModal);
         }
 
-        function saveNewDish(event) {
+        async function saveNewDish(event) {
             event.preventDefault();
             
-            const category = document.getElementById('newCategory').value;
-            const title = document.getElementById('newTitle').value;
-            const description = document.getElementById('newDescription').value;
-            const price = document.getElementById('newPrice').value;
-            const emoji = document.getElementById('newEmoji').value;
-            const imageUrl = document.getElementById('newImageUrl').value;
+            const dishData = {
+                name: document.getElementById('newTitle').value,
+                description: document.getElementById('newDescription').value,
+                price: document.getElementById('newPrice').value,
+                category: document.getElementById('newCategory').value,
+                emoji: document.getElementById('newEmoji').value,
+                imageUrl: document.getElementById('newImageUrl').value
+            };
             
-            // Create new dish card
-            const newCard = document.createElement('div');
-            newCard.className = 'dish-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300';
-            newCard.setAttribute('data-category', category);
-            
-            const gradients = [
-                'from-orange-400 to-red-500',
-                'from-pink-400 to-orange-500',
-                'from-yellow-400 to-orange-500',
-                'from-green-400 to-blue-500',
-                'from-purple-400 to-pink-500',
-                'from-blue-400 to-purple-500'
-            ];
-            const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
-            
-            newCard.innerHTML = `
-                <div class="relative">
-                    <div class="h-48 bg-gradient-to-br ${randomGradient} flex items-center justify-center">
-                        ${imageUrl ? 
-                            `<img src="${imageUrl}" alt="${title}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\\'text-6xl\\'>${emoji}</span>';">` :
-                            `<span class="text-6xl">${emoji}</span>`
-                        }
-                    </div>
-                    <div class="absolute top-4 right-4 price-tag text-white px-3 py-1 rounded-full text-sm font-bold">
-                        ${price}
-                    </div>
-                </div>
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">${title}</h3>
-                    <p class="text-gray-600 mb-4 text-sm leading-relaxed">${description}</p>
-                    <button onclick="openWhatsApp('${title} - ${price}')" class="whatsapp-btn w-full text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                        </svg>
-                        Pedir Agora
-                    </button>
-                </div>
-            `;
-            
-            // Add to appropriate section
-            const targetGrid = document.getElementById(category === 'entradas' ? 'entradasGrid' : 
-                                                   category === 'pratos-principais' ? 'pratosGrid' :
-                                                   category === 'executivos' ? 'executivosGrid' : 'sobremesasGrid');
-            
-            if (targetGrid) {
-                targetGrid.appendChild(newCard);
-            } else {
-                // If grid doesn't exist, add to entradas
-                document.getElementById('entradasGrid').appendChild(newCard);
+            try {
+                await dbManager.saveDish(dishData);
+                event.target.closest('.fixed').remove();
+                showNotification(`✅ "${dishData.name}" foi adicionado ao cardápio!`);
+            } catch (error) {
+                showNotification('❌ Erro ao adicionar prato');
             }
-            
-            // Add admin controls if in admin mode
-            if (isAdminMode) {
-                setTimeout(() => {
-                    document.querySelectorAll('.admin-controls').forEach(control => control.remove());
-                    addEditButtons();
-                }, 100);
-            }
-            
-            // Close modal
-            event.target.closest('.fixed').remove();
-            
-            showNotification(`✅ "${title}" foi adicionado ao cardápio!`);
         }
 
         function editRestaurantInfo() {
-            const currentTitle = document.querySelector('header h1').textContent;
-            const currentSubtitle = document.querySelector('header p').textContent;
-            const currentPhone = document.querySelector('header span').textContent;
-            
             const editModal = document.createElement('div');
             editModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
             editModal.innerHTML = `
@@ -1260,15 +1449,15 @@
                     <form onsubmit="saveRestaurantInfo(event)">
                         <div class="mb-4">
                             <label class="block text-sm font-bold mb-2">Nome do Restaurante:</label>
-                            <input type="text" id="restaurantTitle" value="${currentTitle}" class="w-full border rounded px-3 py-2" required>
+                            <input type="text" id="restaurantTitle" value="${restaurantInfo.name}" class="w-full border rounded px-3 py-2" required>
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-bold mb-2">Slogan:</label>
-                            <input type="text" id="restaurantSubtitle" value="${currentSubtitle}" class="w-full border rounded px-3 py-2" required>
+                            <input type="text" id="restaurantSubtitle" value="${restaurantInfo.slogan}" class="w-full border rounded px-3 py-2" required>
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-bold mb-2">Telefone:</label>
-                            <input type="text" id="restaurantPhone" value="${currentPhone}" class="w-full border rounded px-3 py-2" required>
+                            <input type="text" id="restaurantPhone" value="${restaurantInfo.phone}" class="w-full border rounded px-3 py-2" required>
                         </div>
                         <div class="flex gap-2">
                             <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold flex-1">
@@ -1287,54 +1476,308 @@
         function saveRestaurantInfo(event) {
             event.preventDefault();
             
-            const newTitle = document.getElementById('restaurantTitle').value;
-            const newSubtitle = document.getElementById('restaurantSubtitle').value;
-            const newPhone = document.getElementById('restaurantPhone').value;
+            restaurantInfo.name = document.getElementById('restaurantTitle').value;
+            restaurantInfo.slogan = document.getElementById('restaurantSubtitle').value;
+            restaurantInfo.phone = document.getElementById('restaurantPhone').value;
             
-            document.querySelector('header h1').textContent = newTitle;
-            document.querySelector('header p').textContent = newSubtitle;
-            document.querySelector('header span').textContent = newPhone;
+            document.getElementById('restaurantName').textContent = restaurantInfo.name;
+            document.getElementById('restaurantSlogan').textContent = restaurantInfo.slogan;
+            document.getElementById('restaurantPhone').textContent = restaurantInfo.phone;
+            
+            // Save to localStorage
+            localStorage.setItem('restaurantInfo', JSON.stringify(restaurantInfo));
             
             event.target.closest('.fixed').remove();
             showNotification('✅ Informações do restaurante atualizadas!');
         }
 
-        function manageBanners() {
-            showNotification('🖼️ Funcionalidade de gerenciar banners em desenvolvimento!');
-        }
-
         function exportData() {
-            const dishCards = document.querySelectorAll('.dish-card');
-            const menuData = [];
+            const exportData = {
+                dishes: allDishes,
+                restaurantInfo: restaurantInfo,
+                exportDate: new Date().toISOString()
+            };
             
-            dishCards.forEach(card => {
-                const title = card.querySelector('h3').textContent;
-                const description = card.querySelector('p').textContent;
-                const price = card.querySelector('.price-tag').textContent;
-                const category = card.getAttribute('data-category') || 'entradas';
-                
-                menuData.push({
-                    title,
-                    description,
-                    price,
-                    category
-                });
-            });
-            
-            const dataStr = JSON.stringify(menuData, null, 2);
+            const dataStr = JSON.stringify(exportData, null, 2);
             const dataBlob = new Blob([dataStr], {type: 'application/json'});
             const url = URL.createObjectURL(dataBlob);
             
             const link = document.createElement('a');
             link.href = url;
-            link.download = 'cardapio-backup.json';
+            link.download = `cardapio-backup-${new Date().toISOString().split('T')[0]}.json`;
             link.click();
             
             URL.revokeObjectURL(url);
             showNotification('💾 Dados do cardápio exportados!');
         }
 
+        function syncData() {
+            if (dbManager.isOnline) {
+                dbManager.syncOfflineChanges();
+            } else {
+                showNotification('📱 Sem conexão com a internet');
+            }
+        }
 
+        async function clearFirebaseData() {
+            if (!confirm('⚠️ ATENÇÃO: Isso vai apagar TODOS os pratos do Firebase permanentemente!\n\nTem certeza que deseja continuar?')) {
+                return;
+            }
+            
+            if (!confirm('🚨 ÚLTIMA CONFIRMAÇÃO: Todos os dados serão perdidos!\n\nDigite "CONFIRMAR" para prosseguir:')) {
+                return;
+            }
+            
+            try {
+                await clearAllDishesFromFirebase();
+                showNotification('✅ Firebase limpo com sucesso!');
+            } catch (error) {
+                showNotification('❌ Erro ao limpar Firebase');
+            }
+        }
+
+        // Load restaurant info from localStorage
+        function loadRestaurantInfo() {
+            const savedInfo = localStorage.getItem('restaurantInfo');
+            if (savedInfo) {
+                restaurantInfo = JSON.parse(savedInfo);
+                document.getElementById('restaurantName').textContent = restaurantInfo.name;
+                document.getElementById('restaurantSlogan').textContent = restaurantInfo.slogan;
+                document.getElementById('restaurantPhone').textContent = restaurantInfo.phone;
+            }
+        }
+
+        // Test Firebase connection
+        async function testFirebaseConnection() {
+            try {
+                console.log('🔥 Testando conexão Firebase...');
+                
+                // Test basic connection
+                if (!window.db) {
+                    throw new Error('Firebase não inicializado');
+                }
+                
+                // Test Firestore access
+                const testCollection = window.firestore.collection(window.db, 'dishes');
+                console.log('✅ Firestore conectado com sucesso!');
+                
+                // Try to read data
+                const snapshot = await window.firestore.getDocs(testCollection);
+                console.log(`📊 Encontrados ${snapshot.size} documentos na coleção 'dishes'`);
+                
+                // Show success notification
+                showNotification(`🎉 Firebase conectado! ${snapshot.size} pratos carregados`);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Erro na conexão Firebase:', error);
+                showNotification(`❌ Erro Firebase: ${error.message}`);
+                return false;
+            }
+        }
+
+        // Function to clear all dishes from Firebase
+        async function clearAllDishesFromFirebase() {
+            try {
+                console.log('🗑️ Limpando todos os pratos do Firebase...');
+                showNotification('🗑️ Removendo todos os pratos do Firebase...');
+                
+                // Get all documents from dishes collection
+                const querySnapshot = await window.firestore.getDocs(
+                    window.firestore.collection(window.db, 'dishes')
+                );
+                
+                let deleteCount = 0;
+                const deletePromises = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const deletePromise = window.firestore.deleteDoc(
+                        window.firestore.doc(window.db, 'dishes', doc.id)
+                    );
+                    deletePromises.push(deletePromise);
+                    deleteCount++;
+                });
+                
+                // Wait for all deletions to complete
+                await Promise.all(deletePromises);
+                
+                console.log(`✅ ${deleteCount} pratos removidos do Firebase!`);
+                showNotification(`🗑️ ${deleteCount} pratos removidos do Firebase!`);
+                
+                // Clear local data as well
+                allDishes = [];
+                localStorage.removeItem('dishes');
+                
+                // Clear all grids
+                document.getElementById('entradasGrid').innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum prato cadastrado</div>';
+                document.getElementById('pratosGrid').innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum prato cadastrado</div>';
+                document.getElementById('executivosGrid').innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum prato cadastrado</div>';
+                document.getElementById('sobremesasGrid').innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum prato cadastrado</div>';
+                
+                return deleteCount;
+                
+            } catch (error) {
+                console.error('❌ Erro ao limpar Firebase:', error);
+                showNotification(`❌ Erro ao limpar Firebase: ${error.message}`);
+                throw error;
+            }
+        }
+
+        // Function to add all dishes to Firebase
+        async function addAllDishesToFirebase() {
+            const dishesToAdd = [
+                {
+                    name: 'Pastéis Sortidos',
+                    description: 'Pastéis de carne, pepperoni, costela e carne de sol.',
+                    price: 'R$ 29,90',
+                    category: 'entradas',
+                    emoji: '🥟'
+                },
+                {
+                    name: 'Pastéis de Camarão',
+                    description: 'Pastéis com cream cheese e creme de camarão, servidos com molho de ervas.',
+                    price: 'R$ 34,90',
+                    category: 'entradas',
+                    emoji: '🦐'
+                },
+                {
+                    name: 'Fritapá de Camarão',
+                    description: 'Bolinho frito de vatapá de camarão com base de moqueca, crocante por fora e cremoso por dentro.',
+                    price: 'R$ 25,90',
+                    category: 'entradas',
+                    emoji: '🍤'
+                },
+                {
+                    name: 'Ensopado de Vaca Atolada',
+                    description: 'Caldinho cremoso de costela com macaxeira.',
+                    price: 'R$ 15,90',
+                    category: 'entradas',
+                    emoji: '🍲'
+                },
+                {
+                    name: 'Caldo da Caridade',
+                    description: 'Caldo de carne moída com legumes.',
+                    price: 'R$ 16,90',
+                    category: 'entradas',
+                    emoji: '🥣'
+                },
+                {
+                    name: 'Carne de Sol com Macaxeira',
+                    description: 'Carne de sol salteada na manteiga da terra e cebolas roxas, servida com macaxeira cremosa e cubos de queijo coalho.',
+                    price: 'R$ 39,90',
+                    category: 'entradas',
+                    emoji: '🥩'
+                },
+                {
+                    name: 'Sol do Sertão',
+                    description: 'Chips crocantes de macaxeira servidas com carne de sol desfiada e creme de nata.',
+                    price: 'R$ 29,90',
+                    category: 'entradas',
+                    emoji: '🌞'
+                },
+                {
+                    name: 'Batata Frita',
+                    description: 'Palitos de batata inglesa crocantes com raspas de queijo e molho da casa.',
+                    price: 'R$ 16,90',
+                    category: 'entradas',
+                    emoji: '🍟'
+                },
+                {
+                    name: 'Franguim Avuado',
+                    description: 'Meio da asa marinada no sous vide, frita e servida com molho barbecue asiático de abacaxi e gergelim.',
+                    price: 'R$ 29,90',
+                    category: 'entradas',
+                    emoji: '🍗'
+                },
+                {
+                    name: 'Croquetas Caipira',
+                    description: 'Croquetas de frango recheadas com milho e bacon.',
+                    price: 'R$ 19,90',
+                    category: 'entradas',
+                    emoji: '🌽'
+                },
+                {
+                    name: 'Sushi de Carrazera',
+                    description: 'Sushi crocante com massa de macaxeira, cubos de charque e carne de sol, servido com molho de rapadura.',
+                    price: 'R$ 34,90',
+                    category: 'entradas',
+                    emoji: '🍣'
+                },
+                {
+                    name: 'Isca de Tucunaré',
+                    description: 'Tiras de tucunaré à milanesa servidas com molho rosé.',
+                    price: 'R$ 32,90',
+                    category: 'entradas',
+                    emoji: '🐟'
+                },
+                {
+                    name: 'Filé no Panne',
+                    description: 'Tiras de filé mignon salteadas com creme de gorgonzola, servidas no pão italiano quentinho.',
+                    price: 'R$ 79,90',
+                    category: 'entradas',
+                    emoji: '🥩'
+                },
+                {
+                    name: 'Ai Meu Coração',
+                    description: 'Coração de galinha marinado no shoyu, salteado no molho oriental e servido com chips de macaxeira.',
+                    price: 'R$ 32,90',
+                    category: 'entradas',
+                    emoji: '❤️'
+                },
+                {
+                    name: 'Camarão Alho e Óleo',
+                    description: 'Camarão com casca salteado no azeite de oliva, alho e limão.',
+                    price: 'R$ 54,90',
+                    category: 'entradas',
+                    emoji: '🦐'
+                }
+            ];
+
+            try {
+                showNotification('🍤 Cadastrando petiscos e pratos no Firebase...');
+                
+                let addedCount = 0;
+                for (const dish of dishesToAdd) {
+                    await dbManager.saveDish({
+                        ...dish,
+                        imageUrl: ''
+                    });
+                    addedCount++;
+                    console.log(`✅ Adicionado: ${dish.name}`);
+                }
+                
+                showNotification(`🎉 ${addedCount} pratos cadastrados com sucesso no Firebase!`);
+                console.log(`🎉 Total de ${addedCount} pratos adicionados ao Firebase!`);
+                
+            } catch (error) {
+                console.error('❌ Erro ao cadastrar pratos:', error);
+                showNotification('❌ Erro ao cadastrar alguns pratos');
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRestaurantInfo();
+            
+            // Wait for Firebase to load, then add all dishes
+            setTimeout(async () => {
+                if (window.db) {
+                    const connected = await testFirebaseConnection();
+                    if (connected) {
+                        console.log('🍤 Cadastrando petiscos e pratos no Firebase...');
+                        await addAllDishesToFirebase();
+                    } else {
+                        console.warn('Falha na conexão, usando dados locais');
+                        dbManager.loadFromLocalStorage();
+                    }
+                } else {
+                    console.warn('Firebase não carregado, usando dados locais');
+                    showNotification('📱 Modo offline - usando dados locais');
+                    dbManager.loadFromLocalStorage();
+                }
+            }, 2000);
+        });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9894fef323832755',t:'MTc1OTU4NDIyOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'989530eba0952755',t:'MTc1OTU4NjI3NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
