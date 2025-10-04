@@ -1756,6 +1756,241 @@
             }
         }
 
+        // Function to add main dishes to Firebase
+        async function addMainDishesToFirebase() {
+            const mainDishes = [
+                {
+                    name: 'Camarão João Pessoa',
+                    description: 'Arroz gratinado de camarão puxado à base de moqueca e servido com camarões empanados.',
+                    price: 'R$ 149,90',
+                    category: 'pratos-principais',
+                    emoji: '🦐'
+                },
+                {
+                    name: 'Filé à Parmegiana Dupla',
+                    description: 'Tradicional filé empanado com molho de tomate italiano e gratinado de mussarela, servido com massa grano duro.',
+                    price: 'R$ 129,90',
+                    category: 'pratos-principais',
+                    emoji: '🍝'
+                },
+                {
+                    name: 'Picanha Trinchada',
+                    description: 'Steaks de picanha selada na chapa com manteiga de ervas, sal temperado e cebolas roxas. Acompanha macaxeira cremosa, arroz de brócolis, farofa e vinagrete.',
+                    price: 'R$ 79,90',
+                    category: 'pratos-principais',
+                    emoji: '🥩'
+                },
+                {
+                    name: 'Picanha Completa',
+                    description: 'Picanha trinchada grelhada na chapa com temperos especiais e acompanhamentos tradicionais.',
+                    price: 'R$ 159,00',
+                    category: 'pratos-principais',
+                    emoji: '🔥'
+                },
+                {
+                    name: 'Filé de Seu Pedro',
+                    description: 'Medalhões de filé mignon selados e flambados servidos com creme de gorgonzola. Acompanha arroz à piemontese.',
+                    price: 'R$ 189,00',
+                    category: 'pratos-principais',
+                    emoji: '👨‍🍳'
+                },
+                {
+                    name: 'Costela de Bacurim',
+                    description: 'Costela suína assada lentamente e regada com barbecue de abacaxi. Acompanha batatas rústicas temperadas com o tempero do chef.',
+                    price: 'R$ 79,90',
+                    category: 'pratos-principais',
+                    emoji: '🍖'
+                }
+            ];
+
+            try {
+                showNotification('🍽️ Cadastrando pratos principais no Firebase...');
+                
+                let addedCount = 0;
+                for (const dish of mainDishes) {
+                    await dbManager.saveDish({
+                        ...dish,
+                        imageUrl: ''
+                    });
+                    addedCount++;
+                    console.log(`✅ Adicionado: ${dish.name}`);
+                }
+                
+                showNotification(`🎉 ${addedCount} pratos principais cadastrados com sucesso!`);
+                console.log(`🎉 Total de ${addedCount} pratos principais adicionados ao Firebase!`);
+                
+            } catch (error) {
+                console.error('❌ Erro ao cadastrar pratos principais:', error);
+                showNotification('❌ Erro ao cadastrar alguns pratos principais');
+            }
+        }
+
+        // Function to add executive dishes to Firebase
+        async function addExecutiveDishesToFirebase() {
+            const executiveDishes = [
+                {
+                    name: 'Cumê de Rico',
+                    description: 'Arroz cremoso ao molho branco, puxado com camarões salteados e camarões empanados.',
+                    price: 'R$ 49,90',
+                    category: 'executivos',
+                    emoji: '🦐'
+                },
+                {
+                    name: 'Boi Bêbo',
+                    description: 'Costela bovina marinada na cerveja preta e ervas, assada levemente ao vapor e servida com arroz de jerimum e cebolinho.',
+                    price: 'R$ 39,90',
+                    category: 'executivos',
+                    emoji: '🍺'
+                },
+                {
+                    name: 'Cumêzim de Vó',
+                    description: 'Arroz vermelho cozido ao leite, servido com chips de macaxeira crocante e carne de sol desfiada.',
+                    price: 'R$ 32,90',
+                    category: 'executivos',
+                    emoji: '👵'
+                },
+                {
+                    name: 'Filé à Parmegiana',
+                    description: 'Filé empanado com molho de tomate italiano e gratinado de mussarela, servido com massa italiana.',
+                    price: 'R$ 59,90',
+                    category: 'executivos',
+                    emoji: '🍝'
+                },
+                {
+                    name: 'Baião de 4',
+                    description: 'Baião de feijão verde puxado com carne de sol, queijo coalho, charque e torresmo, servido com couve frita.',
+                    price: 'R$ 49,90',
+                    category: 'executivos',
+                    emoji: '🌱'
+                },
+                {
+                    name: 'Camarão do Chef',
+                    description: 'Massa italiana com molho bisque de camarão, finalizada com tomates confitados e camarões salteados.',
+                    price: 'R$ 72,90',
+                    category: 'executivos',
+                    emoji: '👨‍🍳'
+                },
+                {
+                    name: 'Frango à Parmegiana',
+                    description: 'Filé de frango empanado com molho de tomate italiano e gratinado de mussarela, servido com massa italiana.',
+                    price: 'R$ 34,90',
+                    category: 'executivos',
+                    emoji: '🐔'
+                },
+                {
+                    name: 'Frango à Parmegiana Trinchada',
+                    description: 'Filé de frango trinchado com molho de tomate italiano e gratinado de mussarela.',
+                    price: 'R$ 34,90',
+                    category: 'executivos',
+                    emoji: '🍗'
+                },
+                {
+                    name: 'Camarão à Romana',
+                    description: 'Camarões inteiros com molho rosé e gratinado de mussarela.',
+                    price: 'R$ 49,90',
+                    category: 'executivos',
+                    emoji: '🦐'
+                },
+                {
+                    name: 'Arroz à Piemontese',
+                    description: 'Arroz cremoso com quatro queijos.',
+                    price: 'R$ 14,90',
+                    category: 'executivos',
+                    emoji: '🧀'
+                },
+                {
+                    name: 'Franguim Magrim',
+                    description: 'Filé de frango cozido levemente no suco, grelhado na chapa e servido com arroz branco e mix de salada crua.',
+                    price: 'R$ 39,90',
+                    category: 'executivos',
+                    emoji: '🥗'
+                }
+            ];
+
+            try {
+                showNotification('🍽️ Cadastrando pratos executivos no Firebase...');
+                
+                let addedCount = 0;
+                for (const dish of executiveDishes) {
+                    await dbManager.saveDish({
+                        ...dish,
+                        imageUrl: ''
+                    });
+                    addedCount++;
+                    console.log(`✅ Adicionado: ${dish.name}`);
+                }
+                
+                showNotification(`🎉 ${addedCount} pratos executivos cadastrados com sucesso!`);
+                console.log(`🎉 Total de ${addedCount} pratos executivos adicionados ao Firebase!`);
+                
+            } catch (error) {
+                console.error('❌ Erro ao cadastrar pratos executivos:', error);
+                showNotification('❌ Erro ao cadastrar alguns pratos executivos');
+            }
+        }
+
+        // Function to add desserts to Firebase
+        async function addDessertsToFirebase() {
+            const desserts = [
+                {
+                    name: 'Dirmantelo de Goiabada',
+                    description: 'Brûlée de creme de queijo de manteiga com calda de goiabada, crumble de biscoito e castanha de caju.',
+                    price: 'R$ 32,90',
+                    category: 'sobremesas',
+                    emoji: '🍮'
+                },
+                {
+                    name: 'Pudim Matuto',
+                    description: 'Tradicional pudim feito com leite de coco e calda de rapadura.',
+                    price: 'R$ 19,90',
+                    category: 'sobremesas',
+                    emoji: '🥥'
+                },
+                {
+                    name: 'Bagaceira de Chocolate',
+                    description: 'Gran Gateau de chocolate servido com picolé crocante.',
+                    price: 'R$ 32,90',
+                    category: 'sobremesas',
+                    emoji: '🍫'
+                },
+                {
+                    name: 'Cocada Quente',
+                    description: 'Cocada cremosa assada ao forno com brûlée e sorvete de creme.',
+                    price: 'R$ 34,90',
+                    category: 'sobremesas',
+                    emoji: '🥥'
+                },
+                {
+                    name: 'Surpresa de Morango',
+                    description: 'Creme de baunilha, sorvete de creme e geleia de morango.',
+                    price: 'R$ 34,90',
+                    category: 'sobremesas',
+                    emoji: '🍓'
+                }
+            ];
+
+            try {
+                showNotification('🍰 Cadastrando sobremesas no Firebase...');
+                
+                let addedCount = 0;
+                for (const dessert of desserts) {
+                    await dbManager.saveDish({
+                        ...dessert,
+                        imageUrl: ''
+                    });
+                    addedCount++;
+                    console.log(`✅ Adicionado: ${dessert.name}`);
+                }
+                
+                showNotification(`🎉 ${addedCount} sobremesas cadastradas com sucesso!`);
+                console.log(`🎉 Total de ${addedCount} sobremesas adicionadas ao Firebase!`);
+                
+            } catch (error) {
+                console.error('❌ Erro ao cadastrar sobremesas:', error);
+                showNotification('❌ Erro ao cadastrar algumas sobremesas');
+            }
+        }
+
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             loadRestaurantInfo();
@@ -1765,8 +2000,17 @@
                 if (window.db) {
                     const connected = await testFirebaseConnection();
                     if (connected) {
-                        console.log('🍤 Cadastrando petiscos e pratos no Firebase...');
+                        console.log('🍤 Cadastrando entradas no Firebase...');
                         await addAllDishesToFirebase();
+                        
+                        console.log('🍽️ Cadastrando pratos principais no Firebase...');
+                        await addMainDishesToFirebase();
+                        
+                        console.log('🍽️ Cadastrando pratos executivos no Firebase...');
+                        await addExecutiveDishesToFirebase();
+                        
+                        console.log('🍰 Cadastrando sobremesas no Firebase...');
+                        await addDessertsToFirebase();
                     } else {
                         console.warn('Falha na conexão, usando dados locais');
                         dbManager.loadFromLocalStorage();
@@ -1779,5 +2023,5 @@
             }, 2000);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'989530eba0952755',t:'MTc1OTU4NjI3NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'989545a4438f2755',t:'MTc1OTU4NzEyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
