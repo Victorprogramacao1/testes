@@ -10,10 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        body {
-            box-sizing: border-box;
-        }
-        
         * {
             font-family: 'Inter', sans-serif;
         }
@@ -146,6 +142,12 @@
             50% { transform: translateY(-60%) scale(1.2); }
         }
         
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
         .notification {
             position: fixed;
             top: 50%;
@@ -186,6 +188,8 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
+        
+
         
         .modal {
             display: none;
@@ -275,6 +279,8 @@
         .text-shadow-md {
             text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
         }
+        
+
     </style>
 </head>
 <body class="bg-gray-50">
@@ -551,82 +557,7 @@
     </footer>
 
     <script>
-        // Sistema de persistência de dados
-        const STORAGE_KEY = 'cardapio_digital_data';
-        const SETTINGS_KEY = 'cardapio_digital_settings';
-        
-        // Função para salvar dados no localStorage
-        function saveToStorage() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(menuItems));
-                console.log('✅ Dados salvos automaticamente');
-                showSaveNotification();
-            } catch (error) {
-                console.error('❌ Erro ao salvar dados:', error);
-            }
-        }
-        
-        // Função para carregar dados do localStorage
-        function loadFromStorage() {
-            try {
-                const savedData = localStorage.getItem(STORAGE_KEY);
-                if (savedData) {
-                    const parsedData = JSON.parse(savedData);
-                    if (Array.isArray(parsedData) && parsedData.length > 0) {
-                        return parsedData;
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Erro ao carregar dados:', error);
-            }
-            return null;
-        }
-        
-        // Função para salvar configurações
-        function saveSettingsToStorage(settings) {
-            try {
-                localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-                console.log('✅ Configurações salvas');
-            } catch (error) {
-                console.error('❌ Erro ao salvar configurações:', error);
-            }
-        }
-        
-        // Função para carregar configurações
-        function loadSettingsFromStorage() {
-            try {
-                const savedSettings = localStorage.getItem(SETTINGS_KEY);
-                if (savedSettings) {
-                    return JSON.parse(savedSettings);
-                }
-            } catch (error) {
-                console.error('❌ Erro ao carregar configurações:', error);
-            }
-            return null;
-        }
-        
-        // Função para mostrar notificação de salvamento
-        function showSaveNotification() {
-            let notification = document.getElementById('saveNotification');
-            if (!notification) {
-                notification = document.createElement('div');
-                notification.id = 'saveNotification';
-                notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 opacity-0 transition-opacity duration-300';
-                notification.innerHTML = '💾 Dados salvos automaticamente';
-                document.body.appendChild(notification);
-            }
-            
-            notification.classList.remove('opacity-0');
-            notification.classList.add('opacity-100');
-            
-            setTimeout(() => {
-                notification.classList.remove('opacity-100');
-                notification.classList.add('opacity-0');
-            }, 2000);
-        }
-        
-        // Dados padrão do cardápio
-        const defaultMenuItems = [
+        let menuItems = [
             {
                 name: "Pastéis Sortidos",
                 price: "29,90",
@@ -925,15 +856,9 @@
                 category: "sobremesas"
             }
         ];
-        
-        // Inicializar menuItems com dados salvos ou padrão
-        let menuItems = loadFromStorage() || [...defaultMenuItems];
-        
-        // Variável global para configurações
-        let currentWhatsAppNumber = "5583991795370";
 
         function createWhatsAppLink(dishName) {
-            const phoneNumber = currentWhatsAppNumber;
+            const phoneNumber = "5583991795370";
             const message = `Olá! Gostaria de pedir ${dishName}`;
             const encodedMessage = encodeURIComponent(message);
             return `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
@@ -979,7 +904,7 @@
 
         // Optimized WhatsApp function
         function openWhatsApp(dishName) {
-            const phoneNumber = currentWhatsAppNumber;
+            const phoneNumber = "5583991795370";
             const message = `Olá! Gostaria de pedir ${dishName}`;
             const encodedMessage = encodeURIComponent(message);
             const url = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
@@ -1057,6 +982,8 @@
                 window.open('https://docs.google.com/forms/d/e/1FAIpQLSeg5ADar8dvLSmnqkUYAtObrov8U1QubpI_hdoXfZW-v57xlw/viewform?pli=1', '_blank', 'noopener,noreferrer');
             }, 300);
         }
+
+
 
         // Modal functions
         function openModal(imageUrl, dishName) {
@@ -1141,23 +1068,47 @@
             const executivosGrid = document.getElementById('executivosGrid');
             const sobremesasGrid = document.getElementById('sobremesasGrid');
             
-            // Clear existing content
-            entradasGrid.innerHTML = '';
-            pratosGrid.innerHTML = '';
-            executivosGrid.innerHTML = '';
-            sobremesasGrid.innerHTML = '';
-            
             // Filter items by category
             const entradas = menuItems.filter(item => item.category === 'entradas');
             const pratos = menuItems.filter(item => item.category === 'pratos-principais');
             const executivos = menuItems.filter(item => item.category === 'executivos');
             const sobremesas = menuItems.filter(item => item.category === 'sobremesas');
             
-            // Render each category
-            entradasGrid.innerHTML = entradas.map(item => createDishCard(item)).join('');
-            pratosGrid.innerHTML = pratos.map(item => createDishCard(item)).join('');
-            executivosGrid.innerHTML = executivos.map(item => createDishCard(item)).join('');
-            sobremesasGrid.innerHTML = sobremesas.map(item => createDishCard(item)).join('');
+            // Render entradas
+            const entradasFragment = document.createDocumentFragment();
+            const entradasDiv = document.createElement('div');
+            entradasDiv.innerHTML = entradas.map(item => createDishCard(item)).join('');
+            while (entradasDiv.firstChild) {
+                entradasFragment.appendChild(entradasDiv.firstChild);
+            }
+            entradasGrid.appendChild(entradasFragment);
+            
+            // Render pratos principais
+            const pratosFragment = document.createDocumentFragment();
+            const pratosDiv = document.createElement('div');
+            pratosDiv.innerHTML = pratos.map(item => createDishCard(item)).join('');
+            while (pratosDiv.firstChild) {
+                pratosFragment.appendChild(pratosDiv.firstChild);
+            }
+            pratosGrid.appendChild(pratosFragment);
+            
+            // Render pratos executivos
+            const executivosFragment = document.createDocumentFragment();
+            const executivosDiv = document.createElement('div');
+            executivosDiv.innerHTML = executivos.map(item => createDishCard(item)).join('');
+            while (executivosDiv.firstChild) {
+                executivosFragment.appendChild(executivosDiv.firstChild);
+            }
+            executivosGrid.appendChild(executivosFragment);
+            
+            // Render sobremesas
+            const sobremesasFragment = document.createDocumentFragment();
+            const sobremesasDiv = document.createElement('div');
+            sobremesasDiv.innerHTML = sobremesas.map(item => createDishCard(item)).join('');
+            while (sobremesasDiv.firstChild) {
+                sobremesasFragment.appendChild(sobremesasDiv.firstChild);
+            }
+            sobremesasGrid.appendChild(sobremesasFragment);
             
             // Initialize lazy loading after render
             setTimeout(initLazyLoading, 100);
@@ -1287,6 +1238,8 @@
         function startSlideShow() {
             slideInterval = setInterval(nextSlide, 3000); // Change slide every 3 seconds
         }
+
+
 
         // Scroll to top functionality
         function scrollToTop() {
@@ -1508,36 +1461,653 @@
                     loginButton.disabled = false;
                     loginError.classList.remove('hidden');
                     
+                    // Shake animation for error
+                    const modal = loginModal.querySelector('.bg-white');
+                    modal.style.animation = 'shake 0.5s ease-in-out';
+                    setTimeout(() => {
+                        modal.style.animation = '';
+                    }, 500);
+                    
                     // Clear password field
                     document.getElementById('adminPassword').value = '';
                     document.getElementById('adminPassword').focus();
                 }
-            }, 1000);
+            }, 1200);
         }
 
         function showAccessGranted() {
-            const notification = document.createElement('div');
-            notification.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-500 text-white px-8 py-4 rounded-lg shadow-lg z-[10001] text-center';
-            notification.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    <span class="font-semibold">Acesso autorizado! Carregando painel...</span>
+            const successModal = document.createElement('div');
+            successModal.className = 'fixed inset-0 bg-black bg-opacity-75 z-[10001] flex items-center justify-center p-4';
+            
+            successModal.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-md w-full transform transition-all">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Acesso Autorizado</h3>
+                    <p class="text-gray-600 mb-4">Bem-vindo ao painel administrativo</p>
+                    <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span>Carregando sistema...</span>
+                    </div>
                 </div>
             `;
             
-            document.body.appendChild(notification);
+            document.body.appendChild(successModal);
             
             setTimeout(() => {
-                notification.remove();
-            }, 2000);
+                successModal.remove();
+            }, 1500);
         }
 
         function openAdminPanel() {
-            const url = 'https://zerotofamesites.github.io/adminpainel/';
-            window.open(url, '_blank', 'noopener,noreferrer');
+            // Create admin panel overlay
+            const adminPanel = document.createElement('div');
+            adminPanel.id = 'adminPanel';
+            adminPanel.className = 'fixed inset-0 bg-black bg-opacity-90 z-[9999] flex items-center justify-center p-4';
+            
+            adminPanel.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
+                    <!-- Header -->
+                    <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-6 rounded-t-2xl flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">🛠️ Painel Administrativo</h2>
+                            <p class="text-red-100 text-sm">Gerencie seu cardápio digital</p>
+                        </div>
+                        <button onclick="closeAdminPanel()" class="text-white hover:text-red-200 text-3xl font-bold">&times;</button>
+                    </div>
+                    
+                    <!-- Navigation Tabs -->
+                    <div class="flex border-b bg-gray-50">
+                        <button onclick="showAdminTab('products')" class="admin-tab active px-6 py-3 font-semibold text-red-600 border-b-2 border-red-600">
+                            📦 Produtos
+                        </button>
+                        <button onclick="showAdminTab('categories')" class="admin-tab px-6 py-3 font-semibold text-gray-600 hover:text-red-600">
+                            📂 Categorias
+                        </button>
+                        <button onclick="showAdminTab('settings')" class="admin-tab px-6 py-3 font-semibold text-gray-600 hover:text-red-600">
+                            ⚙️ Configurações
+                        </button>
+                        <button onclick="showAdminTab('backup')" class="admin-tab px-6 py-3 font-semibold text-gray-600 hover:text-red-600">
+                            💾 Backup
+                        </button>
+                    </div>
+                    
+                    <!-- Content Area -->
+                    <div class="flex-1 overflow-hidden">
+                        <!-- Products Tab -->
+                        <div id="admin-products" class="admin-content h-full flex">
+                            <!-- Product List -->
+                            <div class="w-1/2 border-r bg-gray-50 flex flex-col">
+                                <div class="p-4 border-b bg-white">
+                                    <div class="flex gap-2 mb-3">
+                                        <input type="text" id="productSearch" placeholder="Buscar produtos..." class="flex-1 px-3 py-2 border rounded-lg text-sm">
+                                        <select id="categoryFilter" class="px-3 py-2 border rounded-lg text-sm">
+                                            <option value="">Todas categorias</option>
+                                            <option value="entradas">Entradas</option>
+                                            <option value="pratos-principais">Pratos Principais</option>
+                                            <option value="executivos">Executivos</option>
+                                            <option value="sobremesas">Sobremesas</option>
+                                        </select>
+                                    </div>
+                                    <button onclick="addNewProduct()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-semibold">
+                                        ➕ Adicionar Produto
+                                    </button>
+                                </div>
+                                <div id="productList" class="flex-1 overflow-y-auto p-4 space-y-2">
+                                    <!-- Products will be loaded here -->
+                                </div>
+                            </div>
+                            
+                            <!-- Product Editor -->
+                            <div class="w-1/2 bg-white flex flex-col">
+                                <div class="p-4 border-b">
+                                    <h3 class="text-lg font-bold text-gray-800">Editor de Produto</h3>
+                                </div>
+                                <div id="productEditor" class="flex-1 overflow-y-auto p-4">
+                                    <div class="text-center text-gray-500 mt-20">
+                                        <div class="text-6xl mb-4">📝</div>
+                                        <p>Selecione um produto para editar ou adicione um novo</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Categories Tab -->
+                        <div id="admin-categories" class="admin-content hidden h-full p-6">
+                            <div class="max-w-4xl mx-auto">
+                                <h3 class="text-xl font-bold mb-6">Gerenciar Categorias</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="bg-gray-50 p-6 rounded-xl">
+                                        <h4 class="font-bold mb-4">Categorias Existentes</h4>
+                                        <div id="categoryList" class="space-y-2">
+                                            <!-- Categories will be loaded here -->
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 p-6 rounded-xl">
+                                        <h4 class="font-bold mb-4">Adicionar Nova Categoria</h4>
+                                        <div class="space-y-3">
+                                            <input type="text" id="newCategoryName" placeholder="Nome da categoria" class="w-full px-3 py-2 border rounded-lg">
+                                            <input type="text" id="newCategoryId" placeholder="ID da categoria (ex: bebidas)" class="w-full px-3 py-2 border rounded-lg">
+                                            <button onclick="addNewCategory()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
+                                                Adicionar Categoria
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Settings Tab -->
+                        <div id="admin-settings" class="admin-content hidden h-full p-6">
+                            <div class="max-w-4xl mx-auto space-y-6">
+                                <h3 class="text-xl font-bold">Configurações Gerais</h3>
+                                
+                                <div class="bg-gray-50 p-6 rounded-xl">
+                                    <h4 class="font-bold mb-4">Informações do Restaurante</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium mb-1">Nome do Restaurante</label>
+                                            <input type="text" id="restaurantName" value="Cardápio Digital" class="w-full px-3 py-2 border rounded-lg">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium mb-1">Telefone WhatsApp</label>
+                                            <input type="text" id="whatsappNumber" value="5583991795370" class="w-full px-3 py-2 border rounded-lg">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium mb-1">Slogan</label>
+                                            <input type="text" id="restaurantSlogan" value="Sabores únicos, experiências inesquecíveis" class="w-full px-3 py-2 border rounded-lg">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium mb-1">Logo URL</label>
+                                            <input type="text" id="logoUrl" class="w-full px-3 py-2 border rounded-lg">
+                                        </div>
+                                    </div>
+                                    <button onclick="saveSettings()" class="mt-4 bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-lg">
+                                        Salvar Configurações
+                                    </button>
+                                </div>
+                                
+                                <div class="bg-gray-50 p-6 rounded-xl">
+                                    <h4 class="font-bold mb-4">Cores do Tema</h4>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium mb-1">Cor Principal</label>
+                                            <input type="color" id="primaryColor" value="#dc2626" class="w-full h-10 border rounded-lg">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium mb-1">Cor Secundária</label>
+                                            <input type="color" id="secondaryColor" value="#ef4444" class="w-full h-10 border rounded-lg">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium mb-1">Cor de Destaque</label>
+                                            <input type="color" id="accentColor" value="#f59e0b" class="w-full h-10 border rounded-lg">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium mb-1">Cor do Texto</label>
+                                            <input type="color" id="textColor" value="#1f2937" class="w-full h-10 border rounded-lg">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Backup Tab -->
+                        <div id="admin-backup" class="admin-content hidden h-full p-6">
+                            <div class="max-w-4xl mx-auto space-y-6">
+                                <h3 class="text-xl font-bold">Backup e Restauração</h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="bg-gray-50 p-6 rounded-xl">
+                                        <h4 class="font-bold mb-4">💾 Fazer Backup</h4>
+                                        <p class="text-gray-600 mb-4">Baixe uma cópia de segurança de todos os seus dados</p>
+                                        <button onclick="downloadBackup()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold">
+                                            Baixar Backup
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="bg-gray-50 p-6 rounded-xl">
+                                        <h4 class="font-bold mb-4">📤 Restaurar Backup</h4>
+                                        <p class="text-gray-600 mb-4">Carregue um arquivo de backup para restaurar os dados</p>
+                                        <input type="file" id="backupFile" accept=".json" class="w-full mb-3 px-3 py-2 border rounded-lg">
+                                        <button onclick="restoreBackup()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-lg font-semibold">
+                                            Restaurar Backup
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="text-yellow-600">⚠️</span>
+                                        <span class="font-semibold text-yellow-800">Atenção</span>
+                                    </div>
+                                    <p class="text-yellow-700 text-sm">
+                                        Restaurar um backup substituirá todos os dados atuais. Certifique-se de fazer um backup antes de restaurar.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(adminPanel);
+            document.body.style.overflow = 'hidden';
+            
+            // Initialize admin panel
+            loadProductList();
+            loadCategoryList();
+            
+            // Add search functionality
+            document.getElementById('productSearch').addEventListener('input', filterProducts);
+            document.getElementById('categoryFilter').addEventListener('change', filterProducts);
         }
 
-        // Initialize everything when page loads
-        document.addEventListener('DOMContentLoade<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9893f77c214f2755',t:'MTc1OTU3MzQzNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+        function closeAdminPanel() {
+            const adminPanel = document.getElementById('adminPanel');
+            if (adminPanel) {
+                adminPanel.remove();
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function showAdminTab(tabName) {
+            // Hide all content areas
+            document.querySelectorAll('.admin-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.classList.remove('active', 'text-red-600', 'border-b-2', 'border-red-600');
+                tab.classList.add('text-gray-600');
+            });
+            
+            // Show selected content
+            document.getElementById(`admin-${tabName}`).classList.remove('hidden');
+            
+            // Activate selected tab
+            event.target.classList.add('active', 'text-red-600', 'border-b-2', 'border-red-600');
+            event.target.classList.remove('text-gray-600');
+        }
+
+        function loadProductList() {
+            const productList = document.getElementById('productList');
+            productList.innerHTML = menuItems.map((item, index) => `
+                <div class="product-item bg-white p-3 rounded-lg border hover:shadow-md cursor-pointer transition-shadow" onclick="editProduct(${index})">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-2xl">
+                            ${item.image}
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-sm">${item.name}</h4>
+                            <p class="text-xs text-gray-500">${item.category} • R$ ${item.price}</p>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="event.stopPropagation(); editProduct(${index})" class="text-blue-600 hover:bg-blue-50 p-1 rounded" title="Editar">
+                                ✏️
+                            </button>
+                            <button onclick="event.stopPropagation(); deleteProduct(${index})" class="text-red-600 hover:bg-red-50 p-1 rounded" title="Excluir">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterProducts() {
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            
+            const filteredItems = menuItems.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm) || 
+                                    item.description.toLowerCase().includes(searchTerm);
+                const matchesCategory = !categoryFilter || item.category === categoryFilter;
+                return matchesSearch && matchesCategory;
+            });
+            
+            const productList = document.getElementById('productList');
+            productList.innerHTML = filteredItems.map((item, originalIndex) => {
+                const actualIndex = menuItems.findIndex(menuItem => menuItem === item);
+                return `
+                    <div class="product-item bg-white p-3 rounded-lg border hover:shadow-md cursor-pointer transition-shadow" onclick="editProduct(${actualIndex})">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-2xl">
+                                ${item.image}
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-sm">${item.name}</h4>
+                                <p class="text-xs text-gray-500">${item.category} • R$ ${item.price}</p>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="event.stopPropagation(); editProduct(${actualIndex})" class="text-blue-600 hover:bg-blue-50 p-1 rounded" title="Editar">
+                                    ✏️
+                                </button>
+                                <button onclick="event.stopPropagation(); deleteProduct(${actualIndex})" class="text-red-600 hover:bg-red-50 p-1 rounded" title="Excluir">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editProduct(index) {
+            const item = menuItems[index];
+            const editor = document.getElementById('productEditor');
+            
+            editor.innerHTML = `
+                <form onsubmit="saveProduct(event, ${index})" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nome do Produto</label>
+                        <input type="text" name="name" value="${item.name}" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Preço (apenas números, ex: 29.90)</label>
+                        <input type="text" name="price" value="${item.price}" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Descrição</label>
+                        <textarea name="description" rows="3" class="w-full px-3 py-2 border rounded-lg" required>${item.description}</textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Emoji</label>
+                        <input type="text" name="image" value="${item.image}" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">URL da Imagem</label>
+                        <input type="url" name="imageUrl" value="${item.imageUrl || ''}" class="w-full px-3 py-2 border rounded-lg">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Categoria</label>
+                        <select name="category" class="w-full px-3 py-2 border rounded-lg" required>
+                            <option value="entradas" ${item.category === 'entradas' ? 'selected' : ''}>Entradas</option>
+                            <option value="pratos-principais" ${item.category === 'pratos-principais' ? 'selected' : ''}>Pratos Principais</option>
+                            <option value="executivos" ${item.category === 'executivos' ? 'selected' : ''}>Executivos</option>
+                            <option value="sobremesas" ${item.category === 'sobremesas' ? 'selected' : ''}>Sobremesas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex gap-3 pt-4">
+                        <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-semibold">
+                            💾 Salvar Alterações
+                        </button>
+                        <button type="button" onclick="clearEditor()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            `;
+        }
+
+        function addNewProduct() {
+            const editor = document.getElementById('productEditor');
+            
+            editor.innerHTML = `
+                <form onsubmit="saveProduct(event, -1)" class="space-y-4">
+                    <div class="bg-green-50 border border-green-200 p-3 rounded-lg mb-4">
+                        <h4 class="font-semibold text-green-800">➕ Adicionar Novo Produto</h4>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nome do Produto</label>
+                        <input type="text" name="name" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Preço (apenas números, ex: 29.90)</label>
+                        <input type="text" name="price" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Descrição</label>
+                        <textarea name="description" rows="3" class="w-full px-3 py-2 border rounded-lg" required></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Emoji</label>
+                        <input type="text" name="image" placeholder="🍕" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">URL da Imagem (opcional)</label>
+                        <input type="url" name="imageUrl" class="w-full px-3 py-2 border rounded-lg">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Categoria</label>
+                        <select name="category" class="w-full px-3 py-2 border rounded-lg" required>
+                            <option value="">Selecione uma categoria</option>
+                            <option value="entradas">Entradas</option>
+                            <option value="pratos-principais">Pratos Principais</option>
+                            <option value="executivos">Executivos</option>
+                            <option value="sobremesas">Sobremesas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex gap-3 pt-4">
+                        <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-semibold">
+                            ➕ Adicionar Produto
+                        </button>
+                        <button type="button" onclick="clearEditor()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            `;
+        }
+
+        function saveProduct(event, index) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const productData = {
+                name: formData.get('name'),
+                price: formData.get('price'),
+                description: formData.get('description'),
+                image: formData.get('image'),
+                imageUrl: formData.get('imageUrl'),
+                category: formData.get('category')
+            };
+            
+            if (index === -1) {
+                // Add new product
+                menuItems.push(productData);
+                alert('✅ Produto adicionado com sucesso!');
+            } else {
+                // Update existing product
+                menuItems[index] = productData;
+                alert('✅ Produto atualizado com sucesso!');
+            }
+            
+            // Refresh the menu and product list
+            refreshMenu();
+            loadProductList();
+            clearEditor();
+        }
+
+        function deleteProduct(index) {
+            if (confirm(`Tem certeza que deseja excluir "${menuItems[index].name}"?`)) {
+                menuItems.splice(index, 1);
+                alert('🗑️ Produto excluído com sucesso!');
+                refreshMenu();
+                loadProductList();
+                clearEditor();
+            }
+        }
+
+        function clearEditor() {
+            const editor = document.getElementById('productEditor');
+            editor.innerHTML = `
+                <div class="text-center text-gray-500 mt-20">
+                    <div class="text-6xl mb-4">📝</div>
+                    <p>Selecione um produto para editar ou adicione um novo</p>
+                </div>
+            `;
+        }
+
+        function refreshMenu() {
+            // Clear existing menu
+            document.getElementById('entradasGrid').innerHTML = '';
+            document.getElementById('pratosGrid').innerHTML = '';
+            document.getElementById('executivosGrid').innerHTML = '';
+            document.getElementById('sobremesasGrid').innerHTML = '';
+            
+            // Re-render menu
+            renderMenu();
+        }
+
+        function loadCategoryList() {
+            const categories = [...new Set(menuItems.map(item => item.category))];
+            const categoryList = document.getElementById('categoryList');
+            
+            categoryList.innerHTML = categories.map(category => `
+                <div class="flex items-center justify-between p-3 bg-white rounded-lg border">
+                    <span class="font-medium">${getCategoryDisplayName(category)}</span>
+                    <span class="text-sm text-gray-500">${menuItems.filter(item => item.category === category).length} itens</span>
+                </div>
+            `).join('');
+        }
+
+        function getCategoryDisplayName(category) {
+            const names = {
+                'entradas': 'Entradas',
+                'pratos-principais': 'Pratos Principais',
+                'executivos': 'Executivos',
+                'sobremesas': 'Sobremesas'
+            };
+            return names[category] || category;
+        }
+
+        function addNewCategory() {
+            const name = document.getElementById('newCategoryName').value.trim();
+            const id = document.getElementById('newCategoryId').value.trim();
+            
+            if (!name || !id) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            // Add category to select options in product editor
+            alert(`Categoria "${name}" adicionada! Você pode usá-la ao criar novos produtos.`);
+            
+            // Clear inputs
+            document.getElementById('newCategoryName').value = '';
+            document.getElementById('newCategoryId').value = '';
+        }
+
+        function saveSettings() {
+            // Get settings values
+            const settings = {
+                restaurantName: document.getElementById('restaurantName').value,
+                whatsappNumber: document.getElementById('whatsappNumber').value,
+                restaurantSlogan: document.getElementById('restaurantSlogan').value,
+                logoUrl: document.getElementById('logoUrl').value,
+                primaryColor: document.getElementById('primaryColor').value,
+                secondaryColor: document.getElementById('secondaryColor').value,
+                accentColor: document.getElementById('accentColor').value,
+                textColor: document.getElementById('textColor').value
+            };
+            
+            // Apply settings to the page
+            document.querySelector('header h1').textContent = settings.restaurantName;
+            document.querySelector('header p').textContent = settings.restaurantSlogan;
+            
+            // Update WhatsApp number in all functions
+            window.currentWhatsAppNumber = settings.whatsappNumber;
+            
+            alert('⚙️ Configurações salvas com sucesso!');
+        }
+
+        function downloadBackup() {
+            const backupData = {
+                menuItems: menuItems,
+                timestamp: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `cardapio-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            alert('💾 Backup baixado com sucesso!');
+        }
+
+        function restoreBackup() {
+            const fileInput = document.getElementById('backupFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Por favor, selecione um arquivo de backup.');
+                return;
+            }
+            
+            if (!confirm('⚠️ Isso substituirá todos os dados atuais. Continuar?')) {
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    if (backupData.menuItems && Array.isArray(backupData.menuItems)) {
+                        menuItems.length = 0; // Clear current items
+                        menuItems.push(...backupData.menuItems); // Add backup items
+                        
+                        refreshMenu();
+                        loadProductList();
+                        
+                        alert('📤 Backup restaurado com sucesso!');
+                    } else {
+                        alert('❌ Arquivo de backup inválido.');
+                    }
+                } catch (error) {
+                    alert('❌ Erro ao ler o arquivo de backup.');
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Performance optimized initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Use requestAnimationFrame for smooth rendering
+            requestAnimationFrame(() => {
+                renderMenu();
+                startSlideShow(); // Start the banner slideshow
+            });
+            
+            // Add scroll event listener for the scroll to top button
+            window.addEventListener('scroll', toggleScrollButton, { passive: true });
+        });
+
+        // Preload critical resources
+        window.addEventListener('load', function() {
+            // Preload WhatsApp if user shows intent
+            const buttons = document.querySelectorAll('.whatsapp-btn');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    const link = document.createElement('link');
+                    link.rel = 'dns-prefetch';
+                    link.href = 'https://wa.me';
+                    document.head.appendChild(link);
+                }, { once: true });
+            });
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97c31a1df2cb12fd',t:'MTc1NzM4MzMzMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'989432b462cf2755',t:'MTc1OTU3NTg2Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
